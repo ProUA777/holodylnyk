@@ -1,0 +1,19 @@
+# Продакшн на VPS: API + автоматичний HTTPS (Caddy бере сертифікат Let's Encrypt сам).
+# 1) Направ домен (A-запис) на IP сервера  2) впиши домен у Caddyfile  3) docker compose up -d --build
+services:
+  api:
+    build: .
+    env_file: .env
+    volumes:
+      - ./data:/srv/data          # ліміти й кеш рецептів переживають перезапуск
+    restart: unless-stopped
+  caddy:
+    image: caddy:2
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [api]
+    restart: unless-stopped
+volumes:
+  caddy_data:

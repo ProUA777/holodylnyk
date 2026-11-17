@@ -1,0 +1,4 @@
+# Заміни api.example.com на свій домен
+api.example.com {
+    reverse_proxy api:8000
+}

@@ -1,0 +1,9 @@
+.env
+__pycache__/
+.pytest_cache/
+backend/data/
+.dart_tool/
+build/
+.idea/
+.vscode/
+*.iml
