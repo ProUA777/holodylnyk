@@ -421,3 +421,15 @@ def test_tastes_and_goal_reach_prompt():
 
 def test_profiles_list_actions(client):
     assert client.get("/v1/profiles").json()[0]["actions"] == ["plan"]
+
+
+def test_claude_primary_gemini_backup():
+    from app.engine.providers import build_provider, FallbackProvider, AnthropicProvider
+    from types import SimpleNamespace
+    st = SimpleNamespace(ai_provider="anthropic", anthropic_api_key="a", gemini_api_key="g",
+                         anthropic_models={"refine": "x", "detail": "y"}, gemini_models={"refine": "x", "detail": "y"},
+                         ai_timeout_seconds=5, max_tokens_json=100)
+    p = build_provider(st)
+    assert isinstance(p, FallbackProvider) and p.primary.name == "anthropic" and p.backup.name == "gemini"
+    st.gemini_api_key = ""
+    assert isinstance(build_provider(st), AnthropicProvider)

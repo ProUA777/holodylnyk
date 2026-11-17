@@ -260,7 +260,7 @@ class AnthropicProvider(AIProvider):
 
 
 class FallbackProvider(AIProvider):
-    """Спершу основний (напр. безкоштовний Gemini); якщо він недоступний або ліміт вичерпано — запасний."""
+    """Спершу основний (Claude); якщо він недоступний або ліміт вичерпано — запасний."""
 
     def __init__(self, primary: AIProvider, backup: AIProvider):
         self.primary, self.backup = primary, backup
@@ -294,7 +294,8 @@ def build_provider(settings) -> AIProvider:
         # Є ще й ключ Claude — він страхує, коли безкоштовний ліміт Gemini закінчився
         return FallbackProvider(gemini_(), anthropic_()) if settings.anthropic_api_key else gemini_()
     if settings.ai_provider == "anthropic":
-        return anthropic_()
+        # Є ще й ключ Gemini — він підстрахує, якщо Claude недоступний (напр. закінчився баланс)
+        return FallbackProvider(anthropic_(), gemini_()) if settings.gemini_api_key else anthropic_()
     if settings.ai_provider == "mock":
         return MockProvider()
     raise RuntimeError(f"Невідомий PHOTOAI_AI_PROVIDER: {settings.ai_provider} (gemini | anthropic | mock)")
