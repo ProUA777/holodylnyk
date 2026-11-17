@@ -8,4 +8,5 @@ RUN mkdir -p /srv/data
 RUN useradd -m appuser && chown -R appuser /srv/data
 USER appuser
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+# Render та інші хмари передають порт у змінній PORT; локально — 8000
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips '*'"]

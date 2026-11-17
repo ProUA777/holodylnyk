@@ -1,0 +1,21 @@
+# Розгортання сервера на Render.com «в один клік»:
+# Render → New → Blueprint → вибери цей репозиторій → впиши ключ Anthropic → Apply.
+services:
+  - type: web
+    name: holodylnyk-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free            # для роботи без засинання: starter
+    region: frankfurt     # найближче до України й Польщі
+    healthCheckPath: /health
+    autoDeploy: true      # кожен push у main оновлює сервер
+    envVars:
+      - key: PHOTOAI_AI_PROVIDER
+        value: anthropic
+      - key: PHOTOAI_ANTHROPIC_API_KEY
+        sync: false       # Render попросить вписати при створенні
+      - key: PHOTOAI_API_KEYS
+        generateValue: true   # Render сам згенерує ключ апки — його ж вписати в GitHub-секрет API_KEY
+      - key: PHOTOAI_CONTACT_EMAIL
+        sync: false
