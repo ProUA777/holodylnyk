@@ -23,6 +23,7 @@ jobs:
 
   android:
     runs-on: ubuntu-latest
+    permissions: { contents: write }   # щоб викласти APK у Releases
     defaults: { run: { working-directory: recipes_app } }
     steps:
       - uses: actions/checkout@v4
@@ -41,6 +42,17 @@ jobs:
         with:
           name: shcho-pryhotuvaty-android
           path: recipes_app/build/app/outputs/flutter-apk/app-release.apk
+      # Пряме посилання для телефона (без входу в GitHub):
+      # https://github.com/${{ github.repository }}/releases/latest/download/shcho-pryhotuvaty.apk
+      - name: APK у Releases
+        if: github.ref == 'refs/heads/main'
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk shcho-pryhotuvaty.apk
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest shcho-pryhotuvaty.apk --target "${{ github.sha }}" --latest \
+            --title "Що приготувати — остання збірка" \
+            --notes "Android: відкрий цю сторінку на телефоні й натисни shcho-pryhotuvaty.apk. Збірка з коміту ${{ github.sha }}."
 
   ios:
     runs-on: macos-latest
