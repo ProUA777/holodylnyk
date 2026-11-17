@@ -40,7 +40,7 @@ DEVICE_RE = re.compile(r"^[A-Za-z0-9-]{8,64}$")
 def build_engine(settings: Settings, store: Store) -> Engine:
     engine = Engine(build_provider(settings), store,
                     max_upload_mb=settings.max_upload_mb, image_max_side=settings.image_max_side,
-                    model_for=settings.model_for, max_tokens_detail=settings.max_tokens_detail)
+                    max_tokens_detail=settings.max_tokens_detail)
     engine.register(RecipesProfile())
     # Нові апки підключаються тут: engine.register(LegoProfile()), engine.register(PartsProfile()) ...
     return engine
@@ -73,10 +73,9 @@ async def lifespan(app: FastAPI):
     app.state.settings = settings
     app.state.store = store
     app.state.engine = build_engine(settings, store)
+    app.state.ai_name = app.state.engine.provider.name
     app.state.limiter = RateLimiter(settings.rate_limit_per_minute)
-    log.info("PhotoAI запущено: provider=%s, models=%s/%s/%s, profiles=%s", settings.ai_provider,
-             settings.model_analyze, settings.model_refine, settings.model_detail,
-             [p["id"] for p in app.state.engine.list()])
+    log.info("PhotoAI запущено: AI=%s, profiles=%s", app.state.ai_name, [p["id"] for p in app.state.engine.list()])
     if not settings.api_key_set:
         log.warning("PHOTOAI_API_KEYS порожній — сервер відкритий для всіх. Для продакшну обов'язково задай ключ.")
     yield
@@ -160,14 +159,15 @@ async def read_json(request: Request):
 
 
 @app.get("/health")
-async def health():
-    return {"status": "ok"}
+async def health(request: Request):
+    return {"status": "ok", "ai": request.app.state.ai_name}
 
 
 @app.get("/privacy", response_class=HTMLResponse)
 async def privacy(request: Request, lang: str = "uk"):
     settings: Settings = request.app.state.settings
-    return privacy_html(lang if lang in ("uk", "pl") else "uk", settings.app_owner, settings.contact_email)
+    return privacy_html(lang if lang in ("uk", "pl") else "uk", settings.app_owner, settings.contact_email,
+                        request.app.state.ai_name)
 
 
 @app.get("/v1/profiles")

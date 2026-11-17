@@ -100,7 +100,7 @@ Bez rejestracji. Bez reklam.
 | **Device or other IDs** | Yes | No | Yes | App functionality, Fraud prevention, security |
 | **Audio → Voice or sound recordings** | No — розпізнає сервіс мовлення телефона, на сервер не надсилається | — | — | — |
 
-\* Передача постачальнику послуг (Anthropic), який обробляє дані від твого імені, за правилами Google Play не вважається «sharing».
+\* Передача постачальнику послуг (Google Gemini / Anthropic), який обробляє дані від твого імені, за правилами Google Play не вважається «sharing». Але на безкоштовному рівні Gemini Google може використовувати запити для покращення своїх продуктів. Це вже написано в політиці конфіденційності. Коли перейдеш на платний рівень Gemini або на Claude, цей пункт можна прибрати.
 
 ## App content: інші пункти
 

@@ -20,8 +20,7 @@ class AIRequest:
     output_schema: dict[str, Any]   # JSON Schema відповіді
     images_jpeg: list[bytes] = field(default_factory=list)  # порожньо — текстовий запит (перерахунок)
     profile_id: str = ""
-    mode: str = "analyze"            # "analyze" | "refine"
-    model: str | None = None         # яка модель відповідає саме за цей крок
+    mode: str = "analyze"            # "analyze" | "refine" — провайдер бере свою модель для цього кроку
 
 
 class Profile(ABC):

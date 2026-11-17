@@ -1,5 +1,7 @@
 # Розгортання сервера на Render.com «в один клік»:
-# Render → New → Blueprint → вибери цей репозиторій → впиши ключ Anthropic → Apply.
+# Render → New → Blueprint → вибери цей репозиторій → впиши ключ Gemini → Apply.
+# Ключ Claude (PHOTOAI_ANTHROPIC_API_KEY) необов'язковий: додай пізніше в Environment —
+# тоді Claude підхоплюватиме, коли безкоштовний ліміт Gemini закінчиться.
 services:
   - type: web
     name: holodylnyk-api
@@ -12,9 +14,9 @@ services:
     autoDeploy: true      # кожен push у main оновлює сервер
     envVars:
       - key: PHOTOAI_AI_PROVIDER
-        value: anthropic
-      - key: PHOTOAI_ANTHROPIC_API_KEY
-        sync: false       # Render попросить вписати при створенні
+        value: gemini
+      - key: PHOTOAI_GEMINI_API_KEY
+        sync: false       # Render попросить вписати при створенні (https://aistudio.google.com/apikey)
       - key: PHOTOAI_API_KEYS
         generateValue: true   # Render сам згенерує ключ апки — його ж вписати в GitHub-секрет API_KEY
       - key: PHOTOAI_CONTACT_EMAIL

@@ -202,33 +202,27 @@ def test_refund_when_ai_fails(monkeypatch, tmp_path):
     get_settings.cache_clear()
 
 
-def test_each_step_uses_its_model(tmp_path):
+def test_each_step_uses_its_model():
     import asyncio
-    from app.config import Settings
-    from app.engine.engine import Engine
-    from app.engine.providers import MockProvider
-    from app.engine.store import Store
-    from app.profiles.recipes import RecipesDetail, RecipesRefine
+    from types import SimpleNamespace
+    from app.engine.base import AIRequest
+    from app.engine.providers import AnthropicProvider
 
+    p = AnthropicProvider("sk-test", {"analyze": "m-fast", "refine": "m-fast2", "detail": "m-smart"}, 10, 100)
     seen = []
 
-    class Spy(MockProvider):
-        async def generate(self, req, mock_output=None):
-            seen.append((req.mode, req.model))
-            return await super().generate(req, mock_output)
+    async def fake_create(**kw):
+        seen.append(kw["model"])
+        if "tools" in kw:
+            return SimpleNamespace(stop_reason="tool_use", content=[
+                SimpleNamespace(type="tool_use", name="submit_result", input={"ok": 1})])
+        return SimpleNamespace(stop_reason="end_turn", content=[SimpleNamespace(type="text", text="## A")])
 
-        async def generate_text(self, system, user, model, max_tokens, mock_text=None):
-            seen.append(("detail", model))
-            return await super().generate_text(system, user, model, max_tokens, mock_text)
-
-    st = Settings(model_analyze="m-fast", model_refine="m-fast2", model_detail="m-smart")
-    eng = Engine(Spy(), Store(str(tmp_path / "m.sqlite3")), max_upload_mb=10, image_max_side=800,
-                 model_for=st.model_for, max_tokens_detail=100)
-    eng.register(RecipesProfile())
-    asyncio.run(eng.analyze("recipes", [jpeg_bytes((300, 300))], RecipesProfile.params_model()))
-    asyncio.run(eng.refine("recipes", RecipesRefine(ingredients=["яйця"])))
-    asyncio.run(eng.detail("recipes", RecipesDetail(**DETAIL)))
-    assert seen == [("analyze", "m-fast"), ("refine", "m-fast2"), ("detail", "m-smart")]
+    p.client.messages.create = fake_create
+    asyncio.run(p.generate(AIRequest(system="s", user_text="u", output_schema={}, images_jpeg=[b"x"], mode="analyze")))
+    asyncio.run(p.generate(AIRequest(system="s", user_text="u", output_schema={}, mode="refine")))
+    asyncio.run(p.generate_text("s", "u", 100))
+    assert seen == ["m-fast", "m-fast2", "m-smart"]
 
 
 def test_detail_postprocess_strips_preamble():
@@ -251,8 +245,6 @@ def test_multi_photo_request_shape(tmp_path):
     from app.engine.engine import Engine
     from app.engine.providers import MockProvider
     from app.engine.store import Store
-    from app.config import Settings
-
     got = {}
 
     class Spy(MockProvider):
@@ -262,7 +254,7 @@ def test_multi_photo_request_shape(tmp_path):
             return await super().generate(req, mock_output)
 
     eng = Engine(Spy(), Store(str(tmp_path / "s.sqlite3")), max_upload_mb=10, image_max_side=800,
-                 model_for=Settings().model_for, max_tokens_detail=100)
+                 max_tokens_detail=100)
     eng.register(RecipesProfile())
     asyncio.run(eng.analyze("recipes", [jpeg_bytes((200, 200))] * 2, RecipesProfile.params_model()))
     assert got["n"] == 2 and "2 фото" in got["prompt"] and "без дублікатів" in got["prompt"]
@@ -282,3 +274,73 @@ def test_old_quota_rows_are_cleaned(tmp_path):
     st._db.execute("INSERT INTO quota(day, key, kind, count) VALUES('2020-01-01','dev:x','analyze',5)")
     st.take([("dev:y", 10)], "analyze")
     assert st._db.execute("SELECT COUNT(*) FROM quota WHERE day='2020-01-01'").fetchone()[0] == 0
+
+
+def _gemini(handler):
+    import httpx
+    from app.engine.providers import GeminiProvider
+    models = {"analyze": "g-fast", "refine": "g-fast", "detail": "g-text"}
+    return GeminiProvider("key", models, 10, 1000, client=httpx.AsyncClient(transport=httpx.MockTransport(handler)))
+
+
+def test_gemini_json_and_images():
+    import asyncio
+    import json as _json
+    import httpx
+    from app.engine.base import AIRequest
+    seen = {}
+
+    def handler(request: httpx.Request):
+        seen["url"] = str(request.url)
+        seen["key"] = request.headers["x-goog-api-key"]
+        seen["body"] = _json.loads(request.content)
+        reply = '```json\n{"food_detected": true, "ingredients": [], "recipes": []}\n```'
+        return httpx.Response(200, json={"candidates": [{"finishReason": "STOP", "content": {"parts": [
+            {"text": "думаю...", "thought": True}, {"text": reply}]}}]})
+
+    out = asyncio.run(_gemini(handler).generate(AIRequest(
+        system="sys", user_text="u", output_schema=RecipesResult.model_json_schema(),
+        images_jpeg=[b"a", b"b"], mode="analyze")))
+    assert out == {"food_detected": True, "ingredients": [], "recipes": []}
+    assert "g-fast:generateContent" in seen["url"] and seen["key"] == "key"
+    parts = seen["body"]["contents"][0]["parts"]
+    assert sum("inlineData" in p for p in parts) == 2 and "JSON Schema" in parts[-1]["text"]
+    assert seen["body"]["generationConfig"]["responseMimeType"] == "application/json"
+
+
+def test_gemini_quota_falls_back_to_claude():
+    import asyncio
+    import httpx
+    from app.engine.providers import AIQuotaError, FallbackProvider, MockProvider
+
+    gem = _gemini(lambda r: httpx.Response(429, json={"error": {"message": "quota"}}))
+    with pytest.raises(AIQuotaError):
+        asyncio.run(gem.generate_text("s", "u", 10))
+    both = FallbackProvider(gem, MockProvider())
+    assert asyncio.run(both.generate_text("s", "u", 10, mock_text="## з Claude")) == "## з Claude"
+    assert both.name == "gemini+mock"
+
+
+def test_gemini_errors_are_mapped():
+    import asyncio
+    import httpx
+    from app.engine.errors import AIBadResponseError, AIUnavailableError
+
+    bad_key = _gemini(lambda r: httpx.Response(400, json={"error": {"message": "API key not valid"}}))
+    with pytest.raises(AIUnavailableError, match="ключ"):
+        asyncio.run(bad_key.generate_text("s", "u", 10))
+    blocked = _gemini(lambda r: httpx.Response(200, json={"candidates": [{"finishReason": "SAFETY", "content": {"parts": []}}]}))
+    with pytest.raises(AIBadResponseError):
+        asyncio.run(blocked.generate_text("s", "u", 10))
+
+
+def test_privacy_names_active_ai(client):
+    from app.privacy import privacy_html
+    g = privacy_html("uk", "X", "a@b.c", "gemini+anthropic")
+    assert "Google (Gemini)" in g and "Anthropic (Claude)" in g and "безкоштовному рівні" in g
+    c = privacy_html("pl", "X", "a@b.c", "anthropic")
+    assert "Anthropic (Claude)" in c and "Gemini" not in c
+
+
+def test_health_reports_ai(client):
+    assert client.get("/health").json() == {"status": "ok", "ai": "mock"}

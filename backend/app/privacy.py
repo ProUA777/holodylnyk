@@ -25,8 +25,8 @@ TEXT = {
         "items": [
             ("Фото, які ви робите або вибираєте", "надсилаються на наш сервер лише для розпізнавання продуктів. "
              "Перед цим із фото видаляються метадані (зокрема геолокація). Сервер передає фото AI-сервісу "
-             "Anthropic (Claude) для аналізу й не зберігає їх після відповіді."),
-            ("Список продуктів і параметри (дієта, час, порції, мова)", "надсилаються на сервер і в Anthropic, щоб "
+             "{vendor} для аналізу й не зберігає їх після відповіді."),
+            ("Список продуктів і параметри (дієта, час, порції, мова)", "надсилаються на сервер і AI-сервісу, щоб "
              "підібрати рецепти. Тексти детальних рецептів кешуються на сервері без прив'язки до людини."),
             ("Випадковий ідентифікатор пристрою", "створюється застосунком (не рекламний ID і не номер телефону) і "
              "разом з IP-адресою використовується лише для денних лімітів і захисту від зловживань. "
@@ -34,8 +34,8 @@ TEXT = {
             ("Мікрофон (лише в режимі «Готувати голосом»)", "голосові команди розпізнає сервіс мовлення вашого "
              "телефона (Google або Apple). На наш сервер голос не надсилається."),
             ("Збережені рецепти й список покупок", "зберігаються тільки на вашому телефоні."),
-            ("Передача даних", "лише через зашифроване з'єднання (HTTPS). Anthropic обробляє дані як постачальник "
-             "послуг відповідно до своїх умов: https://www.anthropic.com/legal/privacy"),
+            ("Передача даних", "лише через зашифроване з'єднання (HTTPS). AI-сервіс обробляє дані як постачальник "
+             "послуг відповідно до своїх умов: {links}.{free_note}"),
         ],
         "updated": "Оновлено",
         "contact": "Контакт",
@@ -57,8 +57,8 @@ TEXT = {
         "items": [
             ("Zdjęcia, które robisz lub wybierasz", "są wysyłane na nasz serwer wyłącznie w celu rozpoznania produktów. "
              "Wcześniej usuwane są z nich metadane (w tym lokalizacja). Serwer przekazuje zdjęcia usłudze AI "
-             "Anthropic (Claude) do analizy i nie przechowuje ich po odpowiedzi."),
-            ("Lista produktów i ustawienia (dieta, czas, porcje, język)", "są wysyłane na serwer i do Anthropic, aby "
+             "{vendor} do analizy i nie przechowuje ich po odpowiedzi."),
+            ("Lista produktów i ustawienia (dieta, czas, porcje, język)", "są wysyłane na serwer i do usługi AI, aby "
              "dobrać przepisy. Teksty szczegółowych przepisów są buforowane na serwerze bez powiązania z osobą."),
             ("Losowy identyfikator urządzenia", "tworzony przez aplikację (nie jest to identyfikator reklamowy ani numer "
              "telefonu); razem z adresem IP służy wyłącznie do dziennych limitów i ochrony przed nadużyciami. "
@@ -66,8 +66,8 @@ TEXT = {
             ("Mikrofon (tylko w trybie „Gotuj głosem”)", "polecenia głosowe rozpoznaje usługa mowy Twojego telefonu "
              "(Google lub Apple). Głos nie jest wysyłany na nasz serwer."),
             ("Zapisane przepisy i lista zakupów", "są przechowywane wyłącznie w Twoim telefonie."),
-            ("Przesyłanie danych", "wyłącznie szyfrowanym połączeniem (HTTPS). Anthropic przetwarza dane jako dostawca "
-             "usług zgodnie ze swoimi warunkami: https://www.anthropic.com/legal/privacy"),
+            ("Przesyłanie danych", "wyłącznie szyfrowanym połączeniem (HTTPS). Usługa AI przetwarza dane jako dostawca "
+             "usług zgodnie ze swoimi warunkami: {links}.{free_note}"),
         ],
         "updated": "Aktualizacja",
         "contact": "Kontakt",
@@ -75,8 +75,27 @@ TEXT = {
 }
 
 
-def privacy_html(lang: str, owner: str, email: str) -> str:
+VENDORS = {
+    "uk": {"gemini": "Google (Gemini)", "anthropic": "Anthropic (Claude)",
+           "both": "Google (Gemini), а якщо він недоступний — Anthropic (Claude)",
+           "free": " На безкоштовному рівні Gemini API Google може використовувати надіслані запити для покращення "
+                   "своїх продуктів — тому не фотографуй документи та інші особисті речі."},
+    "pl": {"gemini": "Google (Gemini)", "anthropic": "Anthropic (Claude)",
+           "both": "Google (Gemini), a gdy jest niedostępna — Anthropic (Claude)",
+           "free": " W bezpłatnym planie Gemini API Google może wykorzystywać przesłane zapytania do ulepszania "
+                   "swoich produktów — dlatego nie fotografuj dokumentów ani innych rzeczy osobistych."},
+}
+LINKS = {"gemini": "https://ai.google.dev/gemini-api/terms, https://policies.google.com/privacy",
+         "anthropic": "https://www.anthropic.com/legal/privacy"}
+
+
+def privacy_html(lang: str, owner: str, email: str, ai: str = "anthropic") -> str:
     t = TEXT.get(lang, TEXT["uk"])
+    v = VENDORS.get(lang, VENDORS["uk"])
+    uses_gemini, uses_claude = "gemini" in ai, ("anthropic" in ai or ai == "mock")
+    vendor = v["both"] if uses_gemini and "anthropic" in ai else v["gemini"] if uses_gemini else v["anthropic"]
+    links = ", ".join(LINKS[k] for k, on in (("gemini", uses_gemini), ("anthropic", uses_claude)) if on)
+    ai_fmt = {"vendor": vendor, "links": links, "free_note": v["free"] if uses_gemini else ""}
     other = "pl" if lang == "uk" else "uk"
     fmt = {"owner": escape(owner), "email": f'<a href="mailto:{escape(email)}">{escape(email)}</a>'}
     body = []
@@ -84,7 +103,7 @@ def privacy_html(lang: str, owner: str, email: str) -> str:
         body.append(f"<h2>{escape(title)}</h2>")
         if text is None:
             body.append("<ul>" + "".join(
-                f"<li><b>{escape(k)}</b> — {escape(v)}</li>" for k, v in t["items"]) + "</ul>")
+                f"<li><b>{escape(k)}</b> — {escape(val.format(**ai_fmt))}</li>" for k, val in t["items"]) + "</ul>")
         else:
             body.append(f"<p>{escape(text).replace('{owner}', fmt['owner']).replace('{email}', fmt['email'])}</p>")
     return f"""<!DOCTYPE html><html lang="{lang}"><head><meta charset="utf-8">

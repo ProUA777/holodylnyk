@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
@@ -17,12 +17,11 @@ log = logging.getLogger("photoai.engine")
 
 class Engine:
     def __init__(self, provider: AIProvider, store: Store, *, max_upload_mb: float, image_max_side: int,
-                 model_for: Callable[[str], str], max_tokens_detail: int):
+                 max_tokens_detail: int):
         self.provider = provider
         self.store = store
         self.max_upload_mb = max_upload_mb
         self.image_max_side = image_max_side
-        self.model_for = model_for
         self.max_tokens_detail = max_tokens_detail
         self._profiles: dict[str, Profile] = {}
 
@@ -54,7 +53,6 @@ class Engine:
             images_jpeg=jpegs,
             profile_id=profile.id,
             mode="analyze",
-            model=self.model_for("analyze"),
         )
         return await self._run(profile, req, params)
 
@@ -69,7 +67,6 @@ class Engine:
             output_schema=profile.result_model.model_json_schema(),
             profile_id=profile.id,
             mode="refine",
-            model=self.model_for("refine"),
         )
         return await self._run(profile, req, params)
 
@@ -82,8 +79,7 @@ class Engine:
         if profile.detail_model is None:
             raise EngineError("Цей профіль не підтримує детальний результат")
         system, user = profile.detail_prompt(data)
-        text = await self.provider.generate_text(system, user, self.model_for("detail"),
-                                                 self.max_tokens_detail, mock_text=profile.mock_detail())
+        text = await self.provider.generate_text(system, user, self.max_tokens_detail, mock_text=profile.mock_detail())
         text = profile.postprocess_detail(text)
         if not text:
             raise AIBadResponseError("AI повернув порожній рецепт, спробуй ще раз")
