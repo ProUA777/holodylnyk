@@ -65,7 +65,7 @@ void _android() {
     g = g.replaceFirst(RegExp(r'applicationId = "[^"]*"'), 'applicationId = "$appId"');
     if (!g.contains('keystoreProperties')) {
       g = g.replaceFirst('android {', '''
-val keystoreProperties = java.util.Properties().apply {
+val keystoreProperties = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
@@ -88,6 +88,7 @@ android {''');
         'signingConfig = if (keystoreProperties.isNotEmpty()) signingConfigs.getByName("release") else signingConfigs.getByName("debug")',
       );
     }
+    if (!g.contains('import java.util.Properties')) g = 'import java.util.Properties\n\n$g';
     kts.writeAsStringSync(g);
   } else if (groovy.existsSync()) {
     groovy.writeAsStringSync(groovy.readAsStringSync().replaceFirst(RegExp(r'applicationId "[^"]*"'), 'applicationId "$appId"'));
