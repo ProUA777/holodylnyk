@@ -217,7 +217,7 @@ flutter build appbundle --dart-define=API_URL=https://api.твійдомен.com
 | Що | Де |
 |---|---|
 | Ліміти на телефон за добу (фото / перерахунки / детальні рецепти) | `.env`: `PHOTOAI_DAILY_PHOTO_LIMIT=10`, `..._REFINE_LIMIT=40`, `..._DETAIL_LIMIT=30` |
-| Яка модель на якому кроці | `.env`: `PHOTOAI_MODEL_ANALYZE`, `..._REFINE`, `..._DETAIL` |
+| Яка модель на якому кроці | `.env`: `PHOTOAI_MODEL_SCAN` (розпізнавання фото), `..._ANALYZE`, `..._REFINE`, `..._DETAIL`; для Gemini — `PHOTOAI_GEMINI_MODEL_SCAN` тощо |
 | Промпти, правила різноманітності, формат детального рецепта | `backend/app/profiles/recipes.py` |
 | Кольори й шрифти апки | `recipes_app/lib/theme.dart` |
 | Тексти екранів (обидві мови) | `recipes_app/lib/l10n.dart`. Нова мова — ще один клас `Strings` |

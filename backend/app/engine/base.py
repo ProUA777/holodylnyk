@@ -20,7 +20,7 @@ class AIRequest:
     output_schema: dict[str, Any]   # JSON Schema відповіді
     images_jpeg: list[bytes] = field(default_factory=list)  # порожньо — текстовий запит (перерахунок)
     profile_id: str = ""
-    mode: str = "analyze"            # "analyze" | "refine" — провайдер бере свою модель для цього кроку
+    mode: str = "analyze"            # "scan" | "analyze" | "refine" | дія — провайдер бере свою модель для цього кроку
 
 
 @dataclass
@@ -48,6 +48,20 @@ class Profile(ABC):
     detail_model: ClassVar[type[BaseModel] | None] = None
     # Додаткові дії: {"plan": Action(...)}
     actions: ClassVar[dict[str, Action]] = {}
+    # Двокрокове розпізнавання: спершу окремий запит «що на фото» (лише зір, без рецептів),
+    # потім текстовий запит із готовим списком. None — один запит на все.
+    scan_model: ClassVar[type[BaseModel] | None] = None
+
+    def scan_prompt(self, params: BaseModel, photo_count: int = 1) -> tuple[str, str]:  # pragma: no cover
+        """(system, user) для кроку розпізнавання."""
+        raise NotImplementedError
+
+    def after_scan(self, scan: BaseModel, params: BaseModel) -> tuple[BaseModel | None, BaseModel | None]:  # pragma: no cover
+        """Повертає (дані для refine, готовий результат). Готовий результат — коли далі йти нема куди (не їжа)."""
+        raise NotImplementedError
+
+    def merge_scan(self, result: BaseModel, scan: BaseModel) -> BaseModel:
+        return result
 
     @abstractmethod
     def system_prompt(self, params: BaseModel) -> str: ...

@@ -17,12 +17,14 @@ class Settings(BaseSettings):
 
     # Gemini: модель на кожен крок. "gemini-flash-latest" — завжди найновіша Flash.
     # Актуальні назви: https://aistudio.google.com (Get code) або https://ai.google.dev/gemini-api/docs/models
+    gemini_model_scan: str = "gemini-flash-latest"      # розпізнавання продуктів на фото
     gemini_model_analyze: str = "gemini-flash-latest"
     gemini_model_refine: str = "gemini-flash-latest"
     gemini_model_detail: str = "gemini-flash-latest"
 
     # Claude: окрема модель на кожен крок — дешева й швидка, де можна, сильна — де треба якість
-    model_analyze: str = "claude-haiku-5-5"   # фото → продукти + список страв
+    model_scan: str = "claude-sonnet-5-5"     # фото → список продуктів (тут важлива точність зору)
+    model_analyze: str = "claude-haiku-5-5"   # продукти → список страв
     model_refine: str = "claude-haiku-5-5"    # перерахунок / «ще рецепти» без фото
     model_detail: str = "claude-sonnet-5-5"   # детальний рецепт (текст)
     max_tokens_json: int = 8192
@@ -55,11 +57,11 @@ class Settings(BaseSettings):
 
     @property
     def anthropic_models(self) -> dict[str, str]:
-        return {"analyze": self.model_analyze, "refine": self.model_refine, "detail": self.model_detail}
+        return {"scan": self.model_scan, "analyze": self.model_analyze, "refine": self.model_refine, "detail": self.model_detail}
 
     @property
     def gemini_models(self) -> dict[str, str]:
-        return {"analyze": self.gemini_model_analyze, "refine": self.gemini_model_refine,
+        return {"scan": self.gemini_model_scan, "analyze": self.gemini_model_analyze, "refine": self.gemini_model_refine,
                 "detail": self.gemini_model_detail}
 
     def daily_limit(self, kind: str) -> int:

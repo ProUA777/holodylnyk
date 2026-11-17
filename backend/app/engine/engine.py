@@ -46,6 +46,8 @@ class Engine:
         if not images:
             raise EngineError("Додай хоча б одне фото")
         jpegs = [prepare_image(img, self.max_upload_mb, self.image_max_side) for img in images]
+        if profile.scan_model is not None:
+            return await self._scan_then_refine(profile, jpegs, params)
         req = AIRequest(
             system=profile.system_prompt(params),
             user_text=profile.analyze_prompt(params, len(jpegs)),
@@ -55,6 +57,29 @@ class Engine:
             mode="analyze",
         )
         return await self._run(profile, req, params)
+
+    async def _scan_then_refine(self, profile: Profile, jpegs: list[bytes], params: BaseModel) -> BaseModel:
+        system, user = profile.scan_prompt(params, len(jpegs))
+        req = AIRequest(system=system, user_text=user, output_schema=profile.scan_model.model_json_schema(),
+                        images_jpeg=jpegs, profile_id=profile.id, mode="scan")
+        raw = await self.provider.generate(req, mock_output=profile.mock_output("scan"))
+        try:
+            scan = profile.scan_model.model_validate(raw)
+        except ValidationError as e:
+            log.warning("Невалідне розпізнавання для %s: %s", profile.id, e)
+            raise AIBadResponseError("AI повернув неочікуваний формат, спробуй ще раз") from e
+        refine_data, ready = profile.after_scan(scan, params)
+        if ready is not None:
+            return ready
+        req = AIRequest(
+            system=profile.system_prompt(params),
+            user_text=profile.refine_prompt(refine_data),
+            output_schema=profile.result_model.model_json_schema(),
+            profile_id=profile.id,
+            mode="analyze",
+        )
+        result = await self._run(profile, req, params)
+        return profile.merge_scan(result, scan)
 
     async def refine(self, profile_id: str, data: BaseModel) -> BaseModel:
         profile = self.get(profile_id)

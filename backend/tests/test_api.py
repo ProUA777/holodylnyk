@@ -247,19 +247,66 @@ def test_multi_photo_request_shape(tmp_path):
     from app.engine.engine import Engine
     from app.engine.providers import MockProvider
     from app.engine.store import Store
-    got = {}
+    calls = []
 
     class Spy(MockProvider):
         async def generate(self, req, mock_output=None):
-            got["n"] = len(req.images_jpeg)
-            got["prompt"] = req.user_text
+            calls.append(req)
             return await super().generate(req, mock_output)
 
     eng = Engine(Spy(), Store(str(tmp_path / "s.sqlite3")), max_upload_mb=10, image_max_side=800,
                  max_tokens_detail=100)
     eng.register(RecipesProfile())
-    asyncio.run(eng.analyze("recipes", [jpeg_bytes((200, 200))] * 2, RecipesProfile.params_model()))
-    assert got["n"] == 2 and "2 фото" in got["prompt"] and "без дублікатів" in got["prompt"]
+    res = asyncio.run(eng.analyze("recipes", [jpeg_bytes((200, 200))] * 2, RecipesProfile.params_model()))
+    # Двокрокове розпізнавання: 1) лише зір — фото, без рецептів; 2) рецепти — текстом, без фото
+    scan, recipes = calls
+    assert scan.mode == "scan" and len(scan.images_jpeg) == 2
+    assert "2 фото" in scan.user_text and "Рецептів не пропонуй" in scan.system
+    assert "recipes" not in scan.output_schema["properties"]
+    assert recipes.mode == "analyze" and not recipes.images_jpeg
+    assert "яйця" in recipes.user_text and "щось у банці" not in recipes.user_text  # низька впевненість — не передаємо
+    assert "use_soon): помідори" in recipes.user_text
+    # Список продуктів у відповіді — з кроку розпізнавання (з кількостями й свіжістю)
+    names = [i.name for i in res.ingredients]
+    assert "яйця" in names and "щось у банці" not in names
+    assert next(i for i in res.ingredients if i.name == "помідори").freshness.value == "use_soon"
+
+
+def test_scan_not_food_skips_recipes(tmp_path):
+    import asyncio
+    from app.engine.engine import Engine
+    from app.engine.providers import MockProvider
+    from app.engine.store import Store
+    calls = []
+
+    class NotFood(MockProvider):
+        async def generate(self, req, mock_output=None):
+            calls.append(req.mode)
+            return {"food_detected": False, "message": "На фото кіт", "ingredients": []}
+
+    eng = Engine(NotFood(), Store(str(tmp_path / "s.sqlite3")), max_upload_mb=10, image_max_side=800,
+                 max_tokens_detail=100)
+    eng.register(RecipesProfile())
+    res = asyncio.run(eng.analyze("recipes", [jpeg_bytes((200, 200))], RecipesProfile.params_model()))
+    assert calls == ["scan"] and res.food_detected is False and res.message == "На фото кіт" and not res.recipes
+
+
+def test_gemini_vision_uses_high_resolution():
+    import asyncio, httpx
+    from app.engine.base import AIRequest
+    from app.engine.providers import GeminiProvider
+    bodies = []
+
+    def handler(request):
+        bodies.append(json.loads(request.content))
+        return httpx.Response(200, json={"candidates": [{"content": {"parts": [{"text": '{"food_detected": false}'}]}}]})
+
+    models = {"scan": "m-scan", "analyze": "m-a", "refine": "m-r", "detail": "m-d"}
+    p = GeminiProvider("k", models, 10, 1000, client=httpx.AsyncClient(transport=httpx.MockTransport(handler)))
+    asyncio.run(p.generate(AIRequest("s", "u", {"type": "object"}, images_jpeg=[b"x"], mode="scan")))
+    asyncio.run(p.generate(AIRequest("s", "u", {"type": "object"}, mode="refine")))
+    assert bodies[0]["generationConfig"]["mediaResolution"] == "MEDIA_RESOLUTION_HIGH"
+    assert "mediaResolution" not in bodies[1]["generationConfig"]
 
 
 def test_privacy_pages(client):

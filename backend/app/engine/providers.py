@@ -112,12 +112,16 @@ class GeminiProvider(AIProvider):
         self.client = client or httpx.AsyncClient(timeout=timeout)
 
     async def _call(self, model: str, system: str, parts: list[dict[str, Any]], max_tokens: int,
-                    json_mode: bool) -> str:
+                    json_mode: bool, vision: bool = False) -> str:
         body: dict[str, Any] = {
             "systemInstruction": {"parts": [{"text": system}]},
             "contents": [{"role": "user", "parts": parts}],
             "generationConfig": {"maxOutputTokens": max_tokens},
         }
+        if vision:
+            # Без цього Gemini стискає фото до ~258 токенів — дрібні етикетки й продукти на задніх полицях губляться
+            body["generationConfig"]["mediaResolution"] = "MEDIA_RESOLUTION_HIGH"
+            body["generationConfig"]["temperature"] = 0.2
         if json_mode:
             body["generationConfig"]["responseMimeType"] = "application/json"
         try:
@@ -162,7 +166,8 @@ class GeminiProvider(AIProvider):
         parts.append({"text": f"{req.user_text}\n\nВідповідай ЛИШЕ одним JSON-об'єктом за цією JSON Schema "
                               f"(без пояснень і без ```):\n{schema}"})
         model = self.models.get(req.mode, self.models["refine"])  # нові дії (напр. plan) — на моделі «refine»
-        text = await self._call(model, req.system, parts, self.max_tokens, json_mode=True)
+        text = await self._call(model, req.system, parts, self.max_tokens, json_mode=True,
+                                vision=bool(req.images_jpeg))
         return parse_json_loose(text)
 
     async def generate_text(self, system, user, max_tokens, mock_text=None) -> str:
@@ -204,6 +209,7 @@ class AnthropicProvider(AIProvider):
             msg = await self.client.messages.create(
                 model=self.models.get(req.mode, self.models["refine"]),
                 max_tokens=self.max_tokens,
+                **({"temperature": 0.2} if req.images_jpeg else {}),
                 system=req.system,
                 messages=[{"role": "user", "content": content}],
                 tools=[tool],
