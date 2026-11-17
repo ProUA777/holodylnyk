@@ -27,6 +27,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/brand/
 
 # Іконка апки: dart run flutter_launcher_icons   (setup.sh/ps1 запускають самі)
 flutter_launcher_icons:
@@ -43,8 +45,12 @@ flutter_native_splash:
   image: "assets/icon/splash.png"
   color_dark: "#120B24"
   image_dark: "assets/icon/splash_dark.png"
+  branding: "assets/brand/koreec_branding.png"        # логотип Koreec знизу заставки
+  branding_dark: "assets/brand/koreec_branding.png"
   android_12:
     color: "#C8F135"
     image: "assets/icon/splash12.png"
     color_dark: "#120B24"
     image_dark: "assets/icon/splash12_dark.png"
+    branding: "assets/brand/koreec_branding.png"
+    branding_dark: "assets/brand/koreec_branding.png"

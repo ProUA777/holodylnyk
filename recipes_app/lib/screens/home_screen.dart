@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../config.dart';
 import '../l10n.dart';
 import '../main.dart';
 import '../models.dart';
 import '../theme.dart';
+import '../widgets/brand.dart';
 import 'photos_screen.dart';
 import 'results_screen.dart';
 
@@ -91,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 28),
-          Text(AppConfig.credit, textAlign: TextAlign.center, style: theme.textTheme.bodySmall?.copyWith(color: extra.muted)),
+          const BrandFooter(),
         ],
       ),
     );
@@ -116,7 +116,7 @@ Future<void> showPrefsSheet(BuildContext context) {
               child: Text(t, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
             );
         return SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -175,6 +175,8 @@ Future<void> showPrefsSheet(BuildContext context) {
                 ]),
                 const SizedBox(height: 20),
                 FilledButton(onPressed: () => Navigator.pop(ctx), child: Text(t.done)),
+                const SizedBox(height: 22),
+                BrandFooter(appName: t.appName, logoHeight: 56),
               ],
             ),
           ),
