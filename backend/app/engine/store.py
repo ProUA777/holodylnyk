@@ -51,7 +51,7 @@ class Store:
                                        (day, key, kind)).fetchone()
                 used = row[0] if row else 0
                 if limit and used >= limit:
-                    raise DailyLimitError(LIMIT_MESSAGES[kind].format(limit=keys[0][1]))
+                    raise DailyLimitError(LIMIT_MESSAGES.get(kind, LIMIT_MESSAGES["refine"]).format(limit=keys[0][1]))
                 counts.append(used)
             for key, _ in keys:
                 self._db.execute("""INSERT INTO quota(day, key, kind, count) VALUES(?,?,?,1)
@@ -88,4 +88,5 @@ LIMIT_MESSAGES = {
     "analyze": "На сьогодні вичерпано {limit} фото. Спробуй завтра або впиши продукти вручну.",
     "refine": "На сьогодні вичерпано {limit} підборів рецептів. Спробуй завтра.",
     "detail": "На сьогодні вичерпано {limit} детальних рецептів. Збережені рецепти доступні як і раніше.",
+    "plan": "На сьогодні вичерпано {limit} меню на тиждень. Спробуй завтра.",
 }

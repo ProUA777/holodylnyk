@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     daily_photo_limit: int = 10       # фото на пристрій за добу (0 = без ліміту)
     daily_refine_limit: int = 40      # перерахунків на пристрій за добу
     daily_detail_limit: int = 30      # нових детальних рецептів (з кешу — безкоштовно)
+    daily_plan_limit: int = 5         # меню на тиждень
     ip_limit_multiplier: int = 5      # з однієї IP: ліміт × 5 (кілька телефонів в одній Wi-Fi)
     api_keys: str = ""                # через кому; порожньо = без перевірки (тільки для розробки)
 
@@ -63,7 +64,7 @@ class Settings(BaseSettings):
 
     def daily_limit(self, kind: str) -> int:
         return {"analyze": self.daily_photo_limit, "refine": self.daily_refine_limit,
-                "detail": self.daily_detail_limit}[kind]
+                "detail": self.daily_detail_limit}.get(kind, self.daily_plan_limit)
 
 
 @lru_cache

@@ -3,24 +3,35 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api.dart';
 import 'favorites.dart';
+import 'history.dart';
 import 'l10n.dart';
 import 'models.dart';
 import 'screens/favorites_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/shopping_screen.dart';
 import 'shopping.dart';
+import 'tastes.dart';
 import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final favorites = FavoritesStore();
   final shopping = ShoppingStore();
-  await Future.wait([favorites.load(), shopping.load()]);
+  final tastes = TasteStore();
+  final history = HistoryStore();
+  await Future.wait([favorites.load(), shopping.load(), tastes.load(), history.load()]);
   final prefs = await SharedPreferences.getInstance();
   // Мова: збережена → мова телефона (польська для pl) → українська
   final device = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
   final lang = prefs.getString('lang') ?? (device == 'pl' ? 'pl' : 'uk');
-  runApp(RecipesApp(favorites: favorites, shopping: shopping, api: EngineClient(), initialLang: lang));
+  runApp(RecipesApp(
+    favorites: favorites,
+    shopping: shopping,
+    tastes: tastes,
+    history: history,
+    api: EngineClient(),
+    initialLang: lang,
+  ));
 }
 
 /// Спільні залежності для всіх екранів: AppScope.of(context)
@@ -29,6 +40,8 @@ class AppScope extends InheritedWidget {
     super.key,
     required this.favorites,
     required this.shopping,
+    required this.tastes,
+    required this.history,
     required this.api,
     required this.prefs,
     required this.setLanguage,
@@ -37,9 +50,14 @@ class AppScope extends InheritedWidget {
 
   final FavoritesStore favorites;
   final ShoppingStore shopping;
+  final TasteStore tastes;
+  final HistoryStore history;
   final EngineClient api;
-  final ValueNotifier<RecipeParams> prefs; // дієта, час, порції, мова рецептів
+  final ValueNotifier<RecipeParams> prefs; // дієта, ціль, час, порції, мова рецептів
   final ValueChanged<String> setLanguage;
+
+  /// Налаштування + смаки (👍/👎) — саме це йде з кожним запитом до AI
+  RecipeParams get requestParams => prefs.value.copyWith(liked: tastes.liked, disliked: tastes.disliked);
 
   static AppScope of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<AppScope>()!;
 
@@ -52,12 +70,16 @@ class RecipesApp extends StatefulWidget {
     super.key,
     required this.favorites,
     required this.shopping,
+    required this.tastes,
+    required this.history,
     required this.api,
     required this.initialLang,
   });
 
   final FavoritesStore favorites;
   final ShoppingStore shopping;
+  final TasteStore tastes;
+  final HistoryStore history;
   final EngineClient api;
   final String initialLang;
 
@@ -88,6 +110,8 @@ class _RecipesAppState extends State<RecipesApp> {
     return AppScope(
       favorites: widget.favorites,
       shopping: widget.shopping,
+      tastes: widget.tastes,
+      history: widget.history,
       api: widget.api,
       prefs: _prefs,
       setLanguage: _setLanguage,

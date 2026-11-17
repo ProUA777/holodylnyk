@@ -7,14 +7,25 @@ import '../l10n.dart';
 import '../main.dart';
 import '../models.dart';
 import '../theme.dart';
+import 'plan_screen.dart';
 import 'recipe_screen.dart';
 
 class ResultsScreen extends StatefulWidget {
-  const ResultsScreen({super.key, required this.images, required this.params});
+  const ResultsScreen({
+    super.key,
+    required this.images,
+    required this.params,
+    this.initialIngredients = const [],
+    this.initialUseSoon = const [],
+  });
 
   /// порожньо — ручний режим: користувач сам вписує продукти
   final List<File> images;
   final RecipeParams params;
+
+  /// продукти з минулого сканування (історія) — без нового фото
+  final List<String> initialIngredients;
+  final List<String> initialUseSoon;
 
   @override
   State<ResultsScreen> createState() => _ResultsScreenState();
@@ -22,6 +33,7 @@ class ResultsScreen extends StatefulWidget {
 
 class _ResultsScreenState extends State<ResultsScreen> {
   final List<String> _ingredients = [];
+  final Set<String> _useSoon = {}; // «скоро зіпсується» — страви з них ідуть першими
   final List<Recipe> _recipes = [];
   final _addCtrl = TextEditingController();
   bool _loading = false;
@@ -39,6 +51,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
     _started = true;
     if (widget.images.isNotEmpty) {
       _analyze();
+    } else if (widget.initialIngredients.isNotEmpty) {
+      _ingredients.addAll(widget.initialIngredients);
+      _useSoon.addAll(widget.initialUseSoon);
     } else {
       _adding = true;
     }
@@ -60,11 +75,19 @@ class _ResultsScreenState extends State<ResultsScreen> {
     try {
       final res = await _api.analyze(widget.images, widget.params);
       if (!mounted) return;
+      AppScope.of(context).history.add(
+            res.ingredients.where((i) => i.freshness != 'spoiled').map((i) => i.name).toList(),
+            res.ingredients.where((i) => i.useSoon).map((i) => i.name).toList(),
+            photo: widget.images.first,
+          );
       setState(() {
         _filter = null;
         _ingredients
           ..clear()
-          ..addAll(res.ingredients.map((i) => i.name));
+          ..addAll(res.ingredients.where((i) => i.freshness != 'spoiled').map((i) => i.name));
+        _useSoon
+          ..clear()
+          ..addAll(res.ingredients.where((i) => i.useSoon).map((i) => i.name));
         _recipes
           ..clear()
           ..addAll(res.recipes);
@@ -92,6 +115,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       final res = await _api.refine(
         _ingredients,
         widget.params,
+        useSoon: _useSoon.where(_ingredients.contains).toList(),
         excludeTitles: more ? _recipes.map((r) => r.title).toList() : const [],
       );
       if (!mounted) return;
@@ -229,14 +253,28 @@ class _ResultsScreenState extends State<ResultsScreen> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            ..._ingredients.map((name) => InputChip(
-                  label: Text(name),
-                  onDeleted: () => setState(() {
-                    _ingredients.remove(name);
-                    _dirty = true;
-                  }),
-                  deleteButtonTooltipMessage: t.remove,
-                )),
+            ..._ingredients.map((name) {
+              final soon = _useSoon.contains(name);
+              return InputChip(
+                avatar: soon ? const Icon(Icons.hourglass_bottom, size: 16, color: AppColors.ink) : null,
+                label: Text(name, style: soon ? const TextStyle(color: AppColors.ink, fontWeight: FontWeight.w800) : null),
+                backgroundColor: soon ? AppColors.saffron : null,
+                side: soon ? const BorderSide(color: AppColors.saffron) : null,
+                tooltip: soon ? t.useSoonMark : null,
+                // дотик — позначити / зняти «скоро зіпсується»
+                onPressed: () => setState(() {
+                  soon ? _useSoon.remove(name) : _useSoon.add(name);
+                  _dirty = true;
+                }),
+                onDeleted: () => setState(() {
+                  _ingredients.remove(name);
+                  _useSoon.remove(name);
+                  _dirty = true;
+                }),
+                deleteIconColor: soon ? AppColors.ink : null,
+                deleteButtonTooltipMessage: t.remove,
+              );
+            }),
             ActionChip(
               avatar: Icon(Icons.add, size: 18, color: theme.colorScheme.primary),
               label: Text(t.add, style: TextStyle(color: theme.colorScheme.primary)),
@@ -244,6 +282,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ),
           ],
         ),
+        if (_ingredients.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(t.useSoonHint, style: theme.textTheme.bodySmall?.copyWith(color: extra.muted)),
+        ],
         if (_adding) ...[
           const SizedBox(height: 10),
           Row(children: [
@@ -338,6 +380,18 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   : const Icon(Icons.auto_awesome),
               label: Text(_loadingMore ? t.searchingMore : t.moreRecipes),
             ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => PlanScreen(
+                  ingredients: List.of(_ingredients),
+                  useSoon: _useSoon.where(_ingredients.contains).toList(),
+                  params: widget.params,
+                ),
+              )),
+              icon: const Icon(Icons.calendar_month_outlined),
+              label: Text(t.weekMenu),
+            ),
           ],
         ],
       ],
@@ -380,8 +434,19 @@ class RecipeCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodyMedium?.copyWith(color: extra.muted)),
                 const SizedBox(height: 10),
+                if (recipe.usesSoon.isNotEmpty) ...[
+                  Fact(
+                    icon: Icons.hourglass_bottom,
+                    text: t.saves(recipe.usesSoon.join(', ')),
+                    fg: AppColors.ink,
+                    bg: AppColors.saffron,
+                  ),
+                  const SizedBox(height: 6),
+                ],
                 Wrap(spacing: 6, runSpacing: 6, children: [
                   Fact(icon: Icons.schedule, text: t.minutes(recipe.timeMinutes)),
+                  if (recipe.caloriesPerServing != null)
+                    Fact(icon: Icons.local_fire_department_outlined, text: '${recipe.caloriesPerServing} kcal'),
                   Fact(text: t.difficultyLabels[recipe.difficulty] ?? recipe.difficulty),
                   if (recipe.cuisine != null) Fact(text: recipe.cuisine!),
                   missing == 0

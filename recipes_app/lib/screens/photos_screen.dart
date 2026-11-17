@@ -46,7 +46,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
   }
 
   void _go() {
-    final params = AppScope.of(context).prefs.value;
+    final params = AppScope.of(context).requestParams;
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (_) => ResultsScreen(images: List.of(_photos), params: params),
     ));

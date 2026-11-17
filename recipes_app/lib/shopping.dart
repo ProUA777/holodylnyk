@@ -62,6 +62,16 @@ class ShoppingStore extends ChangeNotifier {
     return count;
   }
 
+  /// Рядки зі зведеного списку меню на тиждень. Повертає, скільки додано.
+  int addLines(List<({String name, String amount})> lines, String source) {
+    var count = 0;
+    for (final l in lines) {
+      if (_merge(l.name, l.amount, source)) count++;
+    }
+    if (count > 0) _changed();
+    return count;
+  }
+
   void addCustom(String name) {
     if (name.trim().isEmpty) return;
     _merge(name.trim(), '', null);

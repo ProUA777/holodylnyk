@@ -6,6 +6,6 @@ class AppConfig {
   static const apiKey = String.fromEnvironment('API_KEY', defaultValue: '');
   static const profileId = 'recipes';
   static const credit = '© by Greater Koreec Project Group';
-  static const version = '1.3.0';
+  static const version = '1.4.0';
   static const logo = 'assets/brand/koreec.png';
 }

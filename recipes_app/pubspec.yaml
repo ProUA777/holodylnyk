@@ -1,7 +1,7 @@
 name: shcho_pryhotuvaty
 description: "Що приготувати — фото продуктів → рецепти. PhotoAI Engine."
 publish_to: 'none'
-version: 1.3.0+4
+version: 1.4.0+5
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -17,6 +17,7 @@ dependencies:
   flutter_tts: ^4.2.0
   speech_to_text: ^7.0.0
   share_plus: ^10.1.4
+  path_provider: ^2.1.4
 
 dev_dependencies:
   flutter_test:

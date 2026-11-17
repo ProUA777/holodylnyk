@@ -3,6 +3,7 @@
 POST /v1/{profile}/analyze   multipart: image=<файл> (до 3 разів), params=<JSON, необов'язково>
 POST /v1/{profile}/refine    JSON: перерахунок без фото
 POST /v1/{profile}/detail    JSON: детальний текст (рецепт) → {"markdown", "cached"}
+POST /v1/{profile}/action/{name}  JSON: додаткова дія профілю (напр. recipes/action/plan — меню на тиждень)
 GET  /v1/profiles            список профілів і їхніх параметрів
 GET  /health
 
@@ -220,3 +221,14 @@ async def detail(request: Request, response: Response, profile_id: str, client: 
         return {"markdown": cached, "cached": True}
     text = await with_quota(request, client, "detail", response, lambda: engine.detail(profile_id, data))
     return {"markdown": text, "cached": False}
+
+
+@app.post("/v1/{profile_id}/action/{name}")
+async def action(request: Request, response: Response, profile_id: str, name: str, client: Client = Depends(guard)):
+    engine: Engine = request.app.state.engine
+    act = engine.get(profile_id).actions.get(name)
+    if act is None:
+        raise HTTPException(status_code=404, detail={"code": "unknown_action", "message": f"Невідома дія: {name}"})
+    data = parse(act.input_model, await read_json(request))
+    result = await with_quota(request, client, name, response, lambda: engine.action(profile_id, name, data))
+    return result.model_dump(mode="json")

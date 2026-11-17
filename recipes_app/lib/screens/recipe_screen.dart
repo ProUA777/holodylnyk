@@ -144,8 +144,29 @@ class _RecipeScreenState extends State<RecipeScreen> {
             if (r.method != null) _InfoChip(icon: Icons.local_fire_department_outlined, text: r.method!),
             if (r.caloriesPerServing != null) _InfoChip(text: t.kcal(r.caloriesPerServing!)),
           ]),
+          if (r.proteinG != null && r.fatG != null && r.carbsG != null) ...[
+            const SizedBox(height: 10),
+            Text('${t.macros(r.proteinG!, r.fatG!, r.carbsG!)} ${t.perServing}',
+                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+          ],
+          if (r.usesSoon.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(color: AppColors.saffron, borderRadius: BorderRadius.circular(99)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.hourglass_bottom, size: 16, color: AppColors.ink),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(t.saves(r.usesSoon.join(', ')),
+                      style: const TextStyle(color: AppColors.ink, fontWeight: FontWeight.w800)),
+                ),
+              ]),
+            ),
+          ],
             ]),
           ),
+          _VoteRow(title: r.title),
           if (r.missingCount > 0)
             Align(
               alignment: Alignment.centerLeft,
@@ -309,6 +330,56 @@ class _ServingsChip extends StatelessWidget {
         Text(text, style: const TextStyle(fontWeight: FontWeight.w800)),
         btn(Icons.add, onPlus),
       ]),
+    );
+  }
+}
+
+/// «Сподобалось?» 👍 / 👎 — наступні підбори враховують смак.
+class _VoteRow extends StatelessWidget {
+  const _VoteRow({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final tastes = AppScope.of(context).tastes;
+    final t = L10n.of(context);
+    final extra = Extra.of(context);
+    return ListenableBuilder(
+      listenable: tastes,
+      builder: (context, _) {
+        final vote = tastes.voteOf(title);
+        Widget btn(bool up) {
+          final on = vote == up;
+          return IconButton(
+            tooltip: up ? '👍' : '👎',
+            isSelected: on,
+            style: IconButton.styleFrom(
+              backgroundColor: on ? (up ? extra.mintBg : extra.tomatoBg) : null,
+            ),
+            icon: Icon(
+              up ? (on ? Icons.thumb_up : Icons.thumb_up_outlined) : (on ? Icons.thumb_down : Icons.thumb_down_outlined),
+              color: on ? (up ? extra.mint : extra.tomato) : null,
+            ),
+            onPressed: () async {
+              await tastes.vote(title, up);
+              if (!context.mounted || tastes.voteOf(title) == null) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(up ? t.likedThanks : t.dislikedThanks)),
+              );
+            },
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Row(children: [
+            Text(t.likeQuestion, style: const TextStyle(fontWeight: FontWeight.w700)),
+            const Spacer(),
+            btn(true),
+            btn(false),
+          ]),
+        );
+      },
     );
   }
 }

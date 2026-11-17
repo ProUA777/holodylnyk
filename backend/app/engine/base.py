@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, ClassVar
+from typing import Any, Callable, ClassVar
 
 from pydantic import BaseModel
 
@@ -23,6 +23,17 @@ class AIRequest:
     mode: str = "analyze"            # "analyze" | "refine" — провайдер бере свою модель для цього кроку
 
 
+@dataclass
+class Action:
+    """Додаткова дія профілю без фото (напр. «меню на тиждень»): POST /v1/{profile}/action/{name}."""
+
+    input_model: type[BaseModel]                 # має поле params (параметри профілю)
+    result_model: type[BaseModel]
+    prompt: Callable[[Any], str]                 # data -> текст запиту
+    postprocess: Callable[[Any, Any], Any] | None = None   # (result, data) -> result
+    mock: Callable[[], dict[str, Any]] | None = None
+
+
 class Profile(ABC):
     """Опис однієї ніші. Щоб додати нову апку — створи підклас і зареєструй його."""
 
@@ -35,6 +46,8 @@ class Profile(ABC):
     refine_model: ClassVar[type[BaseModel] | None] = None
     # Вхідні дані для детального текстового результату (None — не підтримується)
     detail_model: ClassVar[type[BaseModel] | None] = None
+    # Додаткові дії: {"plan": Action(...)}
+    actions: ClassVar[dict[str, Action]] = {}
 
     @abstractmethod
     def system_prompt(self, params: BaseModel) -> str: ...
@@ -73,5 +86,6 @@ class Profile(ABC):
             "description": self.description,
             "supports_refine": self.refine_model is not None,
             "supports_detail": self.detail_model is not None,
+            "actions": sorted(self.actions),
             "params_schema": self.params_model.model_json_schema(),
         }

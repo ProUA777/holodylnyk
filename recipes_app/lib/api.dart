@@ -61,13 +61,14 @@ class EngineClient {
   }
 
   Future<RecipesResult> refine(List<String> ingredients, RecipeParams params,
-      {List<String> excludeTitles = const []}) async {
+      {List<String> excludeTitles = const [], List<String> useSoon = const []}) async {
     final headers = await _headers(json: true);
     final resp = await _guard(() => _client.post(
           _uri('refine'),
           headers: headers,
           body: jsonEncode({
             'ingredients': ingredients,
+            'use_soon': useSoon,
             'exclude_titles': excludeTitles,
             'params': params.toJson(),
           }),
@@ -85,6 +86,24 @@ class EngineClient {
         ));
     final body = _decode(resp);
     return (body['markdown'] as String?) ?? '';
+  }
+
+  /// Меню на кілька днів з наявних продуктів + зведений список покупок.
+  Future<WeekPlan> plan(List<String> ingredients, RecipeParams params,
+      {List<String> useSoon = const [], int days = 7, int mealsPerDay = 2}) async {
+    final headers = await _headers(json: true);
+    final resp = await _guard(() => _client.post(
+          Uri.parse('${AppConfig.apiUrl}/v1/${AppConfig.profileId}/action/plan'),
+          headers: headers,
+          body: jsonEncode({
+            'ingredients': ingredients,
+            'use_soon': useSoon,
+            'days': days,
+            'meals_per_day': mealsPerDay,
+            'params': params.toJson(),
+          }),
+        ));
+    return WeekPlan.fromJson(_decode(resp));
   }
 
   Future<T> _guard<T>(Future<T> Function() call) async {

@@ -12,6 +12,7 @@ class AppColors {
   static const tomatoBg = Color(0xFFFFE6DF);
   static const mint = Color(0xFF0E8F68);
   static const mintBg = Color(0xFFDDF8EE);
+  static const saffron = Color(0xFFFFB000); // «скоро зіпсується»
   static const saffronBg = Color(0xFFFFF3D6);
   static const bg = Color(0xFFFFFFFF);
   static const muted = Color(0xFF6B6585);

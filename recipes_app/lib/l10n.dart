@@ -128,6 +128,30 @@ abstract class Strings {
   String get shoppingHeader;
   String leftToBuy(int n);
 
+  // Свіжість, БЖУ, смаки, меню, історія
+  String get goal;
+  Map<Goal, String> get goalLabels;
+  String get useSoonHint;
+  String get useSoonMark;
+  String saves(String items);
+  String macros(int p, int f, int c);
+  String get perServing;
+  String get likeQuestion;
+  String get likedThanks;
+  String get dislikedThanks;
+  String get weekMenu;
+  String get planLoading;
+  String day(int n);
+  String get mealsPerDay;
+  Map<int, String> get mealsOptions;
+  String get toBuyWeek;
+  String addAllToShopping(int n);
+  String get nothingToBuy;
+  String get makePlan;
+  String get recentScans;
+  String productsN(int n);
+  String dateLabel(DateTime d);
+
   // Навігація
   String get navHome;
   String get navSaved;
@@ -418,6 +442,63 @@ class StringsUk extends Strings {
   String leftToBuy(int n) => 'Залишилось купити: $n';
 
   @override
+  final goal = 'Ціль';
+  @override
+  final goalLabels = const {Goal.any: 'Будь-що', Goal.light: 'Легке', Goal.protein: 'Білкове'};
+  @override
+  final useSoonHint = 'Торкнись продукту, щоб позначити «скоро зіпсується» — страви з нього підуть першими';
+  @override
+  final useSoonMark = 'скоро зіпсується';
+  @override
+  String saves(String items) => 'Рятує: $items';
+  @override
+  String macros(int p, int f, int c) => 'Б $p г · Ж $f г · В $c г';
+  @override
+  final perServing = 'на порцію';
+  @override
+  final likeQuestion = 'Сподобалось?';
+  @override
+  final likedThanks = 'Запам\'ятав: пропонуватиму схоже';
+  @override
+  final dislikedThanks = 'Запам\'ятав: такого більше не пропонуватиму';
+  @override
+  final weekMenu = 'Меню на тиждень';
+  @override
+  final planLoading = 'Складаю меню на тиждень з твоїх продуктів. Зазвичай 20–60 секунд…';
+  @override
+  String day(int n) => 'День $n';
+  @override
+  final mealsPerDay = 'Страв на день';
+  @override
+  final mealsOptions = const {1: 'Обід', 2: 'Сніданок і вечеря', 3: 'Три рази'};
+  @override
+  final toBuyWeek = 'Докупити на тиждень';
+  @override
+  String addAllToShopping(int n) => 'Додати все в покупки ($n)';
+  @override
+  final nothingToBuy = 'Докуповувати нічого не треба';
+  @override
+  final makePlan = 'Скласти меню';
+  @override
+  final recentScans = 'Останні сканування';
+  @override
+  String productsN(int n) {
+    final m10 = n % 10, m100 = n % 100;
+    if (m10 == 1 && m100 != 11) return '$n продукт';
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return '$n продукти';
+    return '$n продуктів';
+  }
+
+  @override
+  String dateLabel(DateTime d) {
+    final now = DateTime.now();
+    final days = DateTime(now.year, now.month, now.day).difference(DateTime(d.year, d.month, d.day)).inDays;
+    if (days == 0) return 'сьогодні';
+    if (days == 1) return 'вчора';
+    return '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}';
+  }
+
+  @override
   final navHome = 'Головна';
   @override
   final navSaved = 'Збережені';
@@ -696,6 +777,63 @@ class StringsPl extends Strings {
   final shoppingHeader = 'Kupić:';
   @override
   String leftToBuy(int n) => 'Zostało do kupienia: $n';
+
+  @override
+  final goal = 'Cel';
+  @override
+  final goalLabels = const {Goal.any: 'Dowolne', Goal.light: 'Lekkie', Goal.protein: 'Białkowe'};
+  @override
+  final useSoonHint = 'Dotknij produktu, aby oznaczyć „wkrótce się zepsuje” — dania z niego będą pierwsze';
+  @override
+  final useSoonMark = 'wkrótce się zepsuje';
+  @override
+  String saves(String items) => 'Ratuje: $items';
+  @override
+  String macros(int p, int f, int c) => 'B $p g · T $f g · W $c g';
+  @override
+  final perServing = 'na porcję';
+  @override
+  final likeQuestion = 'Smakowało?';
+  @override
+  final likedThanks = 'Zapamiętane: zaproponuję podobne';
+  @override
+  final dislikedThanks = 'Zapamiętane: nie będę proponować podobnych';
+  @override
+  final weekMenu = 'Menu na tydzień';
+  @override
+  final planLoading = 'Układam menu na tydzień z twoich produktów. Zwykle 20–60 sekund…';
+  @override
+  String day(int n) => 'Dzień $n';
+  @override
+  final mealsPerDay = 'Posiłków dziennie';
+  @override
+  final mealsOptions = const {1: 'Obiad', 2: 'Śniadanie i kolacja', 3: 'Trzy posiłki'};
+  @override
+  final toBuyWeek = 'Dokupić na tydzień';
+  @override
+  String addAllToShopping(int n) => 'Dodaj wszystko do zakupów ($n)';
+  @override
+  final nothingToBuy = 'Nic nie trzeba dokupić';
+  @override
+  final makePlan = 'Ułóż menu';
+  @override
+  final recentScans = 'Ostatnie skany';
+  @override
+  String productsN(int n) {
+    if (n == 1) return '1 produkt';
+    final m10 = n % 10, m100 = n % 100;
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return '$n produkty';
+    return '$n produktów';
+  }
+
+  @override
+  String dateLabel(DateTime d) {
+    final now = DateTime.now();
+    final days = DateTime(now.year, now.month, now.day).difference(DateTime(d.year, d.month, d.day)).inDays;
+    if (days == 0) return 'dziś';
+    if (days == 1) return 'wczoraj';
+    return '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}';
+  }
 
   @override
   final navHome = 'Start';

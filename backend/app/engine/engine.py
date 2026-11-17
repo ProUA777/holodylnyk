@@ -86,6 +86,27 @@ class Engine:
         self.store.put_detail(f"{profile.id}:{profile.detail_cache_key(data)}", profile.id, text)
         return text
 
+    async def action(self, profile_id: str, name: str, data: BaseModel) -> BaseModel:
+        profile = self.get(profile_id)
+        act = profile.actions.get(name)
+        if act is None:
+            raise ProfileNotFoundError(f"Невідома дія: {name}")
+        params = data.params  # type: ignore[attr-defined]
+        req = AIRequest(
+            system=profile.system_prompt(params),
+            user_text=act.prompt(data),
+            output_schema=act.result_model.model_json_schema(),
+            profile_id=profile.id,
+            mode=name,
+        )
+        raw = await self.provider.generate(req, mock_output=act.mock() if act.mock else None)
+        try:
+            result = act.result_model.model_validate(raw)
+        except ValidationError as e:
+            log.warning("Невалідна відповідь AI для %s/%s: %s", profile.id, name, e)
+            raise AIBadResponseError("AI повернув неочікуваний формат, спробуй ще раз") from e
+        return act.postprocess(result, data) if act.postprocess else result
+
     async def _run(self, profile: Profile, req: AIRequest, params: BaseModel) -> BaseModel:
         raw = await self.provider.generate(req, mock_output=profile.mock_output(req.mode))
         try:

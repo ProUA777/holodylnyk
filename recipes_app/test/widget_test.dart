@@ -6,6 +6,7 @@ import 'package:shcho_pryhotuvaty/l10n.dart';
 import 'package:shcho_pryhotuvaty/models.dart';
 import 'package:shcho_pryhotuvaty/scale.dart';
 import 'package:shcho_pryhotuvaty/shopping.dart';
+import 'package:shcho_pryhotuvaty/tastes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -129,5 +130,53 @@ void main() {
     expect(scaleAmount('3 шт', 0.5), '1,5 шт');
     const md = '## Інгредієнти\n- яйця — 4 шт\n- борошно – 250 г 🛒\n## Приготування\n1. Смаж 5 хв';
     expect(scaleMarkdown(md, 2), '## Інгредієнти\n- яйця — 8 шт\n- борошно – 500 г 🛒\n## Приготування\n1. Смаж 5 хв');
+  });
+
+  test('freshness, macros, week plan and goal are parsed/sent', () {
+    final r = RecipesResult.fromJson({
+      'ingredients': [
+        {'name': 'помідори', 'confidence': 0.9, 'freshness': 'use_soon', 'freshness_note': 'м\'якнуть'},
+      ],
+      'recipes': [
+        {
+          'title': 'Шакшука', 'time_minutes': 25, 'difficulty': 'easy', 'servings': 2,
+          'ingredients': [{'name': 'помідори', 'amount': '3 шт', 'available': true}],
+          'steps': ['x'], 'protein_g': 18, 'fat_g': 20, 'carbs_g': 14, 'uses_soon': ['помідори'],
+        }
+      ],
+    });
+    expect(r.ingredients.single.useSoon, true);
+    final rec = r.recipes.single;
+    expect([rec.proteinG, rec.fatG, rec.carbsG], [18, 20, 14]);
+    expect(Recipe.fromJson(rec.toJson()).usesSoon, ['помідори']);
+
+    final plan = WeekPlan.fromJson({
+      'days': [
+        {'day': 1, 'meals': [{'meal_type': 'soup', 'title': 'Борщ', 'calories_per_serving': 300,
+          'ingredients': [{'name': 'буряк', 'amount': '2 шт', 'available': false}]}]}
+      ],
+      'shopping': [{'name': 'буряк', 'amount': '2 шт'}],
+      'tip': 'Звари бульйон наперед',
+    });
+    expect(plan.days.single.meals.single.toRecipe(4).servings, 4);
+    expect(plan.shopping.single.name, 'буряк');
+
+    final j = const RecipeParams(goal: Goal.protein, liked: ['Борщ']).toJson();
+    expect(j['goal'], 'protein');
+    expect(j['liked'], ['Борщ']);
+    expect(const RecipeParams().toJson().containsKey('liked'), false);
+  });
+
+  test('taste votes toggle and stay unique', () async {
+    SharedPreferences.setMockInitialValues({});
+    TestWidgetsFlutterBinding.ensureInitialized();
+    final tastes = TasteStore();
+    await tastes.vote('Борщ', true);
+    expect(tastes.voteOf('борщ'), true);
+    await tastes.vote('Борщ', false); // перемикання на 👎
+    expect(tastes.liked, isEmpty);
+    expect(tastes.disliked, ['Борщ']);
+    await tastes.vote('Борщ', false); // повторний дотик знімає оцінку
+    expect(tastes.voteOf('Борщ'), null);
   });
 }

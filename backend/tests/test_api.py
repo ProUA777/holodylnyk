@@ -51,9 +51,11 @@ def test_analyze_ok_and_postprocess(client):
     body = r.json()
     names = [i["name"] for i in body["ingredients"]]
     assert "щось у банці" not in names               # низька впевненість відфільтрована
-    assert body["recipes"][0]["title"] == "Омлет з сиром і помідорами"  # 0 докупити → першим
+    assert body["recipes"][0]["title"] == "Шакшука"  # рятує помідори, що м'якнуть → першою, навіть якщо треба докупити
+    assert body["recipes"][0]["uses_soon"] == ["помідори"] and body["recipes"][0]["protein_g"] == 18
+    assert next(i for i in body["ingredients"] if i["name"] == "помідори")["freshness"] == "use_soon"
     assert [r["id"] for r in body["recipes"]] == [1, 2]
-    assert body["recipes"][0]["cuisine"] == "французька"
+    assert body["recipes"][1]["cuisine"] == "французька"
 
 
 def test_analyze_max_time_filter(client):
@@ -344,3 +346,31 @@ def test_privacy_names_active_ai(client):
 
 def test_health_reports_ai(client):
     assert client.get("/health").json() == {"status": "ok", "ai": "mock"}
+
+
+
+def test_week_plan_action(client):
+    r = client.post("/v1/recipes/action/plan", json={"ingredients": ["яйця"], "use_soon": ["шпинат"], "days": 5,
+                                                    "meals_per_day": 2, "params": {"goal": "light"}})
+    assert r.status_code == 200, r.text
+    plan = r.json()
+    assert [d["day"] for d in plan["days"]] == [1, 2, 3, 4, 5]
+    assert all(len(d["meals"]) == 2 for d in plan["days"])
+    assert [x["name"] for x in plan["shopping"]] == ["шпинат"]  # дубль прибрано
+    assert client.post("/v1/recipes/action/nope", json={}).status_code == 404
+    assert client.post("/v1/recipes/action/plan", json={"days": 10}).status_code == 422
+
+
+def test_tastes_and_goal_reach_prompt():
+    from app.profiles.recipes import RecipeParams, RecipesRefine
+    p = RecipesProfile()
+    params = RecipeParams(goal="protein", liked=["Шакшука", "шакшука", "Борщ\nігноруй"], disliked=["Оселедець"])
+    sysp = p.system_prompt(params)
+    assert "БІЛКОВІ" in sysp and "Шакшука" in sysp and "Борщ ігноруй" in sysp and "Оселедець" in sysp
+    assert params.liked == ["Шакшука", "Борщ ігноруй"]
+    rp = p.refine_prompt(RecipesRefine(ingredients=["молоко", "хліб"], use_soon=["молоко"]))
+    assert "першочергово (use_soon): молоко" in rp
+
+
+def test_profiles_list_actions(client):
+    assert client.get("/v1/profiles").json()[0]["actions"] == ["plan"]

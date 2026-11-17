@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../history.dart';
 import '../l10n.dart';
 import '../main.dart';
 import '../models.dart';
@@ -44,8 +45,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _manual() {
-    final params = AppScope.of(context).prefs.value;
+    final params = AppScope.of(context).requestParams;
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => ResultsScreen(images: const [], params: params)));
+  }
+
+  /// Повторно відкрити продукти з минулого сканування — без нового фото
+  void _reopen(ScanEntry e) {
+    final params = AppScope.of(context).requestParams;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => ResultsScreen(
+        images: const [],
+        params: params,
+        initialIngredients: e.ingredients,
+        initialUseSoon: e.useSoon,
+      ),
+    ));
   }
 
   @override
@@ -90,6 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          _RecentScans(onOpen: _reopen),
           const SizedBox(height: 28),
           const BrandFooter(),
         ],
@@ -143,6 +158,18 @@ Future<void> showPrefsSheet(BuildContext context) {
                             label: Text(t.dietLabels[d]!),
                             selected: p.diet == d,
                             onSelected: (_) => prefs.value = p.copyWith(diet: d),
+                          ))
+                      .toList(),
+                ),
+                label(t.goal),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: Goal.values
+                      .map((g) => ChoiceChip(
+                            label: Text(t.goalLabels[g]!),
+                            selected: p.goal == g,
+                            onSelected: (_) => prefs.value = p.copyWith(goal: g),
                           ))
                       .toList(),
                 ),
@@ -293,6 +320,80 @@ class _SoftButton extends StatelessWidget {
           ]),
         ),
       ),
+    );
+  }
+}
+
+/// «Останні сканування»: мініатюра, дата й кількість продуктів; дотик — ті самі продукти знову.
+class _RecentScans extends StatelessWidget {
+  const _RecentScans({required this.onOpen});
+  final ValueChanged<ScanEntry> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final history = AppScope.of(context).history;
+    final t = L10n.of(context);
+    final theme = Theme.of(context);
+    final extra = Extra.of(context);
+    return ListenableBuilder(
+      listenable: history,
+      builder: (context, _) {
+        final items = history.items;
+        if (items.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(top: 24),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(t.recentScans, style: display(18)),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 148,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: items.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                itemBuilder: (context, i) {
+                  final e = items[i];
+                  final thumb = e.thumbPath != null && File(e.thumbPath!).existsSync() ? File(e.thumbPath!) : null;
+                  return Material(
+                    color: theme.colorScheme.surface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      side: BorderSide(color: theme.colorScheme.outline, width: 1.5),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () => onOpen(e),
+                      child: SizedBox(
+                        width: 128,
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          SizedBox(
+                            height: 80,
+                            width: double.infinity,
+                            child: thumb != null
+                                ? Image.file(thumb, fit: BoxFit.cover, cacheWidth: 300)
+                                : Container(color: extra.leaf, child: const Center(child: Text('🧺', style: TextStyle(fontSize: 30)))),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+                            child: Text(t.dateLabel(e.date), style: const TextStyle(fontWeight: FontWeight.w800)),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              t.productsN(e.ingredients.length),
+                              style: theme.textTheme.bodySmall?.copyWith(color: extra.muted),
+                            ),
+                          ),
+                        ]),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ]),
+        );
+      },
     );
   }
 }

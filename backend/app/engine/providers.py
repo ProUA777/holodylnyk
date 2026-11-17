@@ -161,7 +161,8 @@ class GeminiProvider(AIProvider):
         schema = json.dumps(inline_refs(req.output_schema), ensure_ascii=False)
         parts.append({"text": f"{req.user_text}\n\nВідповідай ЛИШЕ одним JSON-об'єктом за цією JSON Schema "
                               f"(без пояснень і без ```):\n{schema}"})
-        text = await self._call(self.models[req.mode], req.system, parts, self.max_tokens, json_mode=True)
+        model = self.models.get(req.mode, self.models["refine"])  # нові дії (напр. plan) — на моделі «refine»
+        text = await self._call(model, req.system, parts, self.max_tokens, json_mode=True)
         return parse_json_loose(text)
 
     async def generate_text(self, system, user, max_tokens, mock_text=None) -> str:
@@ -201,7 +202,7 @@ class AnthropicProvider(AIProvider):
         }
         try:
             msg = await self.client.messages.create(
-                model=self.models[req.mode],
+                model=self.models.get(req.mode, self.models["refine"]),
                 max_tokens=self.max_tokens,
                 system=req.system,
                 messages=[{"role": "user", "content": content}],
