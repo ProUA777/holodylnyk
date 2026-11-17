@@ -1,0 +1,103 @@
+car | Race car | transport | easy | 15 pieces | black, red, yellow
+truck | Delivery truck | transport | medium | 22 pieces | yellow, black, blue
+bus | School bus | transport | medium | 23 pieces | yellow, white, dark grey
+firetruck | Fire engine | transport | hard | 23 pieces | red, black, grey
+plane | Airplane | transport | medium | 11 pieces | white, red, blue
+heli | Helicopter | transport | medium | 18 pieces | blue, black, clear
+boat | Sailboat | transport | medium | 18 pieces | brown, tan, white
+train | Steam engine | transport | hard | 27 pieces | black, red, navy
+tractor | Tractor | transport | medium | 21 pieces | green, yellow, black
+duck | Duckling | animals | easy | 7 pieces | yellow, orange, black
+dog | Puppy | animals | medium | 7 pieces | brown, black
+cat | Ginger cat | animals | easy | 10 pieces | orange, white, black
+giraffe | Giraffe | animals | medium | 17 pieces | yellow, brown, black
+penguin | Penguin | animals | easy | 18 pieces | black, white, orange
+elephant | Elephant | animals | hard | 23 pieces | grey, black
+pig | Piglet | animals | easy | 12 pieces | pink, black
+fish | Fish | animals | easy | 15 pieces | orange, dark grey, white
+turtle | Turtle | animals | easy | 12 pieces | dark green, lime, green
+owl | Owl | animals | medium | 18 pieces | brown, orange, tan
+flower | Daisy | nature | easy | 9 pieces | green, white, lime
+tree | Apple tree | nature | easy | 8 pieces | green, lime, brown
+cactus | Cactus | nature | easy | 11 pieces | green, orange, brown
+mushroom | Toadstool | nature | easy | 17 pieces | red, lime, white
+palm | Island palm | nature | medium | 24 pieces | tan, green, brown
+rocket | Rocket on the pad | space | medium | 11 pieces | navy, white, red
+ufo | Flying saucer | space | easy | 8 pieces | grey, clear, yellow
+satellite | Satellite | space | medium | 8 pieces | navy, yellow, dark grey
+rover | Moon rover | space | medium | 12 pieces | grey, white, navy
+astronaut | Astronaut | space | medium | 16 pieces | white, red, navy
+house | Little house | buildings | hard | 29 pieces | white, dark red, green
+castle | Castle tower | buildings | hard | 40 pieces | grey, brown, dark grey
+lighthouse | Lighthouse | buildings | medium | 18 pieces | black, dark grey, red
+windmill | Windmill | buildings | hard | 27 pieces | tan, dark red, white
+skyscraper | Skyscraper | buildings | medium | 21 pieces | azure, navy, grey
+bridge | River bridge | buildings | medium | 10 pieces | grey, azure, brown
+doghouse | Dog house | buildings | easy | 15 pieces | green, red, brown
+robot | Helper robot | robots | medium | 18 pieces | white, red, grey
+robodog | Robo-dog | robots | medium | 7 pieces | grey, red, azure
+mech | Battle mech | robots | hard | 16 pieces | orange, grey, black
+droid | Round droid | robots | easy | 15 pieces | white, blue, grey
+dragon | Dragon | fantasy | hard | 27 pieces | dark green, lime, yellow
+unicorn | Unicorn | fantasy | hard | 13 pieces | white, pink, yellow
+chest | Treasure chest | fantasy | easy | 14 pieces | brown, yellow
+wizardtower | Wizard tower | fantasy | medium | 19 pieces | purple, navy, brown
+knight | Knight | fantasy | medium | 15 pieces | grey, red, white
+burger | Burger | food | easy | 13 pieces | tan, brown, yellow
+cake | Birthday cake | food | medium | 30 pieces | pink, grey, white
+icecream | Ice cream cone | food | easy | 12 pieces | tan, pink, white
+watermelon | Watermelon slice | food | easy | 14 pieces | red, dark green, lime
+pizza | Pizza | food | easy | 14 pieces | tan, yellow, red
+chair | Chair | home | easy | 13 pieces | brown, red
+table | Table with a lamp | home | medium | 13 pieces | brown, yellow, grey
+sofa | Sofa | home | easy | 11 pieces | navy, yellow
+bed | Bed | home | medium | 16 pieces | brown, white, blue
+tv | TV | home | easy | 14 pieces | black, dark grey, azure
+snowman | Snowman | holidays | easy | 15 pieces | white, black, red
+xmastree | Christmas tree | holidays | medium | 30 pieces | dark green, red, yellow
+gift | Gift box | holidays | easy | 23 pieces | red, yellow
+sleigh | Gift sleigh | holidays | medium | 18 pieces | red, grey, yellow
+lantern | Festive lantern | holidays | easy | 13 pieces | black, red, yellow
+ambulance | Ambulance | transport | medium | 26 pieces | white, black, red
+police | Police car | transport | medium | 21 pieces | white, black, navy
+monstertruck | Monster truck | transport | hard | 28 pieces | green, dark grey, black
+crane | Mobile crane | transport | expert | 30 pieces | yellow, black, dark grey
+cargoship | Container ship | transport | expert | 41 pieces | red, navy, dark grey
+airliner | Airliner | transport | expert | 27 pieces | white, grey, azure
+submarine | Yellow submarine | transport | medium | 16 pieces | yellow, black, clear
+balloon | Hot-air balloon | transport | hard | 54 pieces | red, yellow, brown
+trex | T-rex | animals | hard | 27 pieces | dark green, lime, white
+horse | Horse | animals | hard | 14 pieces | brown, black
+crab | Crab | animals | medium | 10 pieces | red, dark red, white
+parrot | Parrot on a branch | animals | medium | 9 pieces | brown, red, blue
+volcano | Volcano | nature | hard | 58 pieces | dark grey, brown, orange
+treehouse | Treehouse | nature | expert | 46 pieces | green, dark red, brown
+flowerbed | Flower bed | nature | medium | 16 pieces | brown, green, yellow
+spacestation | Space station | space | expert | 19 pieces | navy, grey, white
+shuttle | Space shuttle | space | hard | 15 pieces | white, black, dark grey
+marsbase | Mars base | space | hard | 30 pieces | dark red, white, clear
+megarocket | Moon rocket | space | expert | 26 pieces | white, dark grey, black
+bighouse | Two-storey house | buildings | expert | 63 pieces | white, dark red, green
+firestation | Fire station | buildings | expert | 48 pieces | red, grey, dark grey
+cafe | Café | buildings | hard | 35 pieces | tan, grey, dark grey
+school | School | buildings | hard | 54 pieces | yellow, dark red, green
+barn | Barn with a silo | buildings | hard | 36 pieces | dark grey, green, red
+robotarm | Robot arm | robots | medium | 8 pieces | yellow, dark grey, orange
+megarobot | Giant robot | robots | expert | 33 pieces | white, dark grey, blue
+spiderbot | Spider robot | robots | hard | 34 pieces | dark grey, grey, red
+pirateship | Pirate ship | fantasy | expert | 47 pieces | brown, tan, white
+fortress | Fortress | fantasy | expert | 82 pieces | grey, green, dark grey
+tiercake | Three-tier cake | food | hard | 81 pieces | pink, white, grey
+sushi | Sushi set | food | easy | 11 pieces | black, white, orange
+aquarium | Aquarium | home | medium | 20 pieces | black, clear, brown
+piano | Piano with a bench | home | medium | 13 pieces | black, white, brown
+bunkbed | Bunk bed | home | medium | 33 pieces | brown, blue, red
+gingerbread | Gingerbread house | holidays | hard | 36 pieces | white, brown, pink
+bigtree | Big tree with gifts | holidays | expert | 96 pieces | dark green, white, green
+easteregg | Painted egg | holidays | medium | 28 pieces | pink, yellow, tan
+pyramid | Pyramid | landmarks | hard | 34 pieces | tan, yellow, black
+pagoda | Pagoda | landmarks | expert | 37 pieces | dark green, grey, dark red
+clocktower | Clock tower | landmarks | expert | 47 pieces | tan, grey, navy
+latticetower | Lattice tower | landmarks | expert | 35 pieces | dark grey, grey
+cathedral | Domed cathedral | landmarks | expert | 79 pieces | white, grey, dark green
+arena | Ancient arena | landmarks | expert | 149 pieces | tan, dark grey, yellow

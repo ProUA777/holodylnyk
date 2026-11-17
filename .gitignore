@@ -1,0 +1,14 @@
+# Flutter / Dart
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins*
+mobile/android/key.properties
+mobile/android/app/*.jks
+*.jks
+*.keystore
+# Python
+__pycache__/
+.pytest_cache/
+backend/.env
+backend/data/
+.venv/

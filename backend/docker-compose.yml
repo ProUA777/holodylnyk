@@ -1,0 +1,29 @@
+# Production: API + automatic HTTPS (Let's Encrypt) through Caddy.
+#   1. Point your domain's DNS A-record at the server.
+#   2. cp .env.example .env  and fill in ANTHROPIC_API_KEY, APP_KEYS, DOMAIN.
+#   3. docker compose up -d --build
+services:
+  api:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - limits:/srv/data
+
+  caddy:
+    image: caddy:2.8
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - api
+
+volumes:
+  limits:
+  caddy_data:
