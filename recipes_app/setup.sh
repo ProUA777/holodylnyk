@@ -10,6 +10,14 @@ if ! grep -q 'android.permission.INTERNET' "$MANIFEST"; then
   # Без цього дозволу release-збірка Android не матиме доступу до мережі
   perl -0pi -e 's|(<manifest[^>]*>)|$1\n    <uses-permission android:name="android.permission.INTERNET"/>|' "$MANIFEST"
 fi
+# Android Lint іноді падає на коді сторонніх пакетів (image_picker) під час release-збірки.
+# Наш Dart-код перевіряє flutter analyze, тому вимикаємо лише цей крок Gradle.
+for G in android/app/build.gradle.kts android/app/build.gradle; do
+  if [ -f "$G" ] && ! grep -q checkReleaseBuilds "$G"; then
+    perl -0pi -e 's|(\nandroid\s*\{\n)|$1    lint {\n        checkReleaseBuilds = false\n        abortOnError = false\n    }\n|' "$G"
+  fi
+done
+
 # Мікрофон для «Готувати голосом» + доступ до сервісів розпізнавання й озвучки (Android 11+)
 if ! grep -q 'android.permission.RECORD_AUDIO' "$MANIFEST"; then
   perl -0pi -e 's|(<uses-permission android:name="android.permission.INTERNET"/>)|$1\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <queries>\n        <intent><action android:name="android.speech.RecognitionService"/></intent>\n        <intent><action android:name="android.intent.action.TTS_SERVICE"/></intent>\n    </queries>|' "$MANIFEST"

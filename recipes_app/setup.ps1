@@ -11,6 +11,15 @@ function Edit-File($path, [scriptblock]$change) {
   if ($new -ne $text) { [IO.File]::WriteAllText($path, $new, (New-Object Text.UTF8Encoding $false)) }
 }
 
+# Android Lint іноді падає на коді сторонніх пакетів під час release-збірки — вимикаємо лише цей крок
+foreach ($g in @("android/app/build.gradle.kts", "android/app/build.gradle")) {
+  Edit-File $g {
+    param($t)
+    if ($t -match "checkReleaseBuilds") { return $t }
+    [regex]::Replace($t, '(\nandroid\s*\{\n)', "`$1    lint {`n        checkReleaseBuilds = false`n        abortOnError = false`n    }`n", 1)
+  }
+}
+
 # Дозвіл на інтернет і назва апки
 Edit-File "android/app/src/main/AndroidManifest.xml" {
   param($t)
