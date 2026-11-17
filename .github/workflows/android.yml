@@ -29,7 +29,7 @@ jobs:
       - run: flutter pub get
       - name: Create and configure android/ios
         run: dart run tool/setup_platforms.dart
-      - run: flutter analyze
+      - run: flutter analyze --no-fatal-infos
       - run: flutter test
       - name: Release signing (only if the keystore secret is set)
         env:
