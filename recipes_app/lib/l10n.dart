@@ -11,6 +11,9 @@ abstract class Strings {
 
   // Головна
   String get appName;
+  String get splashTitle;
+  String get splashTag;
+  String get splashFrom;
   String get homeTitle;
   String get homeSubtitle;
   String get takePhoto;
@@ -198,6 +201,12 @@ class StringsUk extends Strings {
 
   @override
   final appName = 'Що приготувати';
+  @override
+  final splashTitle = 'Що приготувати?';
+  @override
+  final splashTag = 'Фото холодильника → рецепти';
+  @override
+  final splashFrom = 'ВІД';
   @override
   final homeTitle = 'Що приготувати?';
   @override
@@ -535,6 +544,12 @@ class StringsPl extends Strings {
 
   @override
   final appName = 'Co ugotować';
+  @override
+  final splashTitle = 'Co ugotować?';
+  @override
+  final splashTag = 'Zdjęcie lodówki → przepisy';
+  @override
+  final splashFrom = 'OD';
   @override
   final homeTitle = 'Co ugotować?';
   @override

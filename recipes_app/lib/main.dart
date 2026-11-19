@@ -9,6 +9,7 @@ import 'models.dart';
 import 'screens/favorites_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/shopping_screen.dart';
+import 'screens/splash_screen.dart';
 import 'shopping.dart';
 import 'tastes.dart';
 import 'theme.dart';
@@ -122,7 +123,7 @@ class _RecipesAppState extends State<RecipesApp> {
           debugShowCheckedModeBanner: false,
           theme: buildTheme(Brightness.light),
           darkTheme: buildTheme(Brightness.dark),
-          home: const Shell(),
+          home: const AnimatedSplash(child: Shell()),
         ),
       ),
     );

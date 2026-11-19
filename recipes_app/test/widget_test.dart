@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 // Перевірка розбору відповіді бекенду (той самий формат, що віддає PhotoAI Engine).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shcho_pryhotuvaty/markdown_view.dart';
@@ -5,6 +6,7 @@ import 'package:shcho_pryhotuvaty/api.dart';
 import 'package:shcho_pryhotuvaty/l10n.dart';
 import 'package:shcho_pryhotuvaty/models.dart';
 import 'package:shcho_pryhotuvaty/scale.dart';
+import 'package:shcho_pryhotuvaty/screens/splash_screen.dart';
 import 'package:shcho_pryhotuvaty/shopping.dart';
 import 'package:shcho_pryhotuvaty/tastes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -178,5 +180,32 @@ void main() {
     expect(tastes.disliked, ['Борщ']);
     await tastes.vote('Борщ', false); // повторний дотик знімає оцінку
     expect(tastes.voteOf('Борщ'), null);
+  });
+
+  testWidgets('заставка: Koreec → значок апки → сама зникає', (tester) async {
+    await tester.pumpWidget(L10n(
+      strings: supportedStrings['uk']!,
+      child: const MaterialApp(home: AnimatedSplash(child: Text('ГОЛОВНА'))),
+    ));
+    await tester.pump(const Duration(milliseconds: 2400));
+    expect(find.text('Що приготувати?'), findsOneWidget);
+    expect(find.text('ВІД'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
+    expect(find.text('Що приготувати?'), findsNothing);
+    expect(find.text('ГОЛОВНА'), findsOneWidget);
+  });
+
+  testWidgets('заставка: дотик — пропустити', (tester) async {
+    await tester.pumpWidget(L10n(
+      strings: supportedStrings['pl']!,
+      child: const MaterialApp(home: AnimatedSplash(child: Text('HOME'))),
+    ));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tapAt(const Offset(200, 300));
+    await tester.pumpAndSettle();
+    expect(find.text('Co ugotować?'), findsNothing);
+    expect(find.text('HOME'), findsOneWidget);
   });
 }
