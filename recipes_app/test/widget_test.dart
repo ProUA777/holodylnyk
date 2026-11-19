@@ -187,6 +187,8 @@ void main() {
       strings: supportedStrings['uk']!,
       child: const MaterialApp(home: AnimatedSplash(child: Text('ГОЛОВНА'))),
     ));
+    await tester.pump(); // кадр, у якому стартує анімація
+    await tester.pump(const Duration(milliseconds: 16));
     await tester.pump(const Duration(milliseconds: 2400));
     expect(find.text('Що приготувати?'), findsOneWidget);
     expect(find.text('ВІД'), findsOneWidget);
