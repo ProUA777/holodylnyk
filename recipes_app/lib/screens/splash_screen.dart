@@ -150,7 +150,7 @@ class _SplashFrame extends StatelessWidget {
       final u = _seg(v, .44, 1, (x) => x);
       final appIn = _seg(u, 0, .14), title = _seg(u, .40, .62), tag = _seg(u, .50, .72);
       final glowA = .30 * math.max(settle * (1 - dissolve * .6), appIn);
-      final glowC = move < .5 ? const Color(0xFF7FD3E0) : AppColors.lime;
+      final glowC = move < .5 ? AppColors.violet : AppColors.lime;
 
       return ColoredBox(
         color: bg,
@@ -290,7 +290,7 @@ class _TwinklePainter extends CustomPainter {
   final double v, twinkle;
 
   static const _pts = [[.12, .22], [.88, .18], [.06, .70], [.94, .74], [.30, .04], [.70, .96], [.5, .5]];
-  static const _tints = [Color(0xFFFFFFFF), Color(0xFF9FE6F0), Color(0xFFE8B48A)];
+  static const _tints = [Color(0xFFFFFFFF), AppColors.lime, Color(0xFFA99BFF)]; // кольори застосунку
 
   @override
   void paint(Canvas canvas, Size size) {
