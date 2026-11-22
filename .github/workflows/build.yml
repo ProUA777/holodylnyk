@@ -21,10 +21,17 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: pytest -q
 
+  # Кожна апка родини збирається окремо: додати апку = ще один рядок у matrix
   android:
     runs-on: ubuntu-latest
     permissions: { contents: write }   # щоб викласти APK у Releases
-    defaults: { run: { working-directory: recipes_app } }
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { dir: recipes_app, apk: shcho-pryhotuvaty, tag: latest, title: "Що приготувати", latest: "--latest" }
+          - { dir: plants_app, apk: shcho-z-roslynoyu, tag: plants-latest, title: "Що з рослиною?", latest: "--latest=false" }
+    defaults: { run: { working-directory: "${{ matrix.dir }}" } }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -40,23 +47,27 @@ jobs:
           --dart-define=API_KEY=${{ secrets.API_KEY }}
       - uses: actions/upload-artifact@v4
         with:
-          name: shcho-pryhotuvaty-android
-          path: recipes_app/build/app/outputs/flutter-apk/app-release.apk
+          name: ${{ matrix.apk }}-android
+          path: ${{ matrix.dir }}/build/app/outputs/flutter-apk/app-release.apk
       # Пряме посилання для телефона (без входу в GitHub):
-      # https://github.com/${{ github.repository }}/releases/latest/download/shcho-pryhotuvaty.apk
+      # https://github.com/<репозиторій>/releases/download/<tag>/<apk>.apk
       - name: APK у Releases
         if: github.ref == 'refs/heads/main'
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
-          cp build/app/outputs/flutter-apk/app-release.apk shcho-pryhotuvaty.apk
-          gh release delete latest --yes --cleanup-tag || true
-          gh release create latest shcho-pryhotuvaty.apk --target "${{ github.sha }}" --latest \
-            --title "Що приготувати — остання збірка" \
-            --notes "Android: відкрий цю сторінку на телефоні й натисни shcho-pryhotuvaty.apk. Збірка з коміту ${{ github.sha }}."
+          cp build/app/outputs/flutter-apk/app-release.apk ${{ matrix.apk }}.apk
+          gh release delete ${{ matrix.tag }} --yes --cleanup-tag || true
+          gh release create ${{ matrix.tag }} ${{ matrix.apk }}.apk --target "${{ github.sha }}" ${{ matrix.latest }} \
+            --title "${{ matrix.title }} — остання збірка" \
+            --notes "Android: відкрий цю сторінку на телефоні й натисни ${{ matrix.apk }}.apk. Збірка з коміту ${{ github.sha }}."
 
   ios:
     runs-on: macos-latest
-    defaults: { run: { working-directory: recipes_app } }
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [recipes_app, plants_app]
+    defaults: { run: { working-directory: "${{ matrix.dir }}" } }
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2

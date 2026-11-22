@@ -30,6 +30,7 @@ from .engine.errors import EngineError
 from .engine.providers import build_provider
 from .engine.store import Store
 from .privacy import privacy_html
+from .profiles.plants import PlantsProfile
 from .profiles.recipes import RecipesProfile
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -43,6 +44,7 @@ def build_engine(settings: Settings, store: Store) -> Engine:
                     max_upload_mb=settings.max_upload_mb, image_max_side=settings.image_max_side,
                     max_tokens_detail=settings.max_tokens_detail)
     engine.register(RecipesProfile())
+    engine.register(PlantsProfile())
     # Нові апки підключаються тут: engine.register(LegoProfile()), engine.register(PartsProfile()) ...
     return engine
 
