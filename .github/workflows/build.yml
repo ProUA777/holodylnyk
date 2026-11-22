@@ -31,6 +31,7 @@ jobs:
         include:
           - { dir: recipes_app, apk: shcho-pryhotuvaty, tag: latest, title: "Що приготувати", latest: "--latest" }
           - { dir: plants_app, apk: shcho-z-roslynoyu, tag: plants-latest, title: "Що з рослиною?", latest: "--latest=false" }
+          - { dir: outfits_app, apk: shcho-vdyahnuty, tag: outfits-latest, title: "Що вдягнути?", latest: "--latest=false" }
     defaults: { run: { working-directory: "${{ matrix.dir }}" } }
     steps:
       - uses: actions/checkout@v4
@@ -66,7 +67,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [recipes_app, plants_app]
+        dir: [recipes_app, plants_app, outfits_app]
     defaults: { run: { working-directory: "${{ matrix.dir }}" } }
     steps:
       - uses: actions/checkout@v4

@@ -30,6 +30,7 @@ from .engine.errors import EngineError
 from .engine.providers import build_provider
 from .engine.store import Store
 from .privacy import privacy_html
+from .profiles.outfits import OutfitsProfile
 from .profiles.plants import PlantsProfile
 from .profiles.recipes import RecipesProfile
 
@@ -45,6 +46,7 @@ def build_engine(settings: Settings, store: Store) -> Engine:
                     max_tokens_detail=settings.max_tokens_detail)
     engine.register(RecipesProfile())
     engine.register(PlantsProfile())
+    engine.register(OutfitsProfile())
     # Нові апки підключаються тут: engine.register(LegoProfile()), engine.register(PartsProfile()) ...
     return engine
 
