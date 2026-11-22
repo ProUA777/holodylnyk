@@ -134,9 +134,9 @@ class _ResultScreenState extends State<ResultScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                 child: FilledButton.icon(
-                  onPressed: _saved ? null : _save,
-                  icon: Icon(_saved ? Icons.check : Icons.local_florist_outlined),
-                  label: Text(_saved ? t.addedToGarden.split('.').first : t.addToGarden),
+                  onPressed: _saved ? () => Shell.openGarden(context) : _save,
+                  icon: Icon(_saved ? Icons.arrow_forward : Icons.local_florist_outlined),
+                  label: Text(_saved ? t.navGarden : t.addToGarden),
                 ),
               ),
             ),

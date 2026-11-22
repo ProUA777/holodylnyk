@@ -102,14 +102,6 @@ double _backOut(double x) {
   return 1 + (c + 1) * math.pow(x - 1, 3) + c * math.pow(x - 1, 2);
 }
 
-double _bounce(double x) {
-  const n = 7.5625, d = 2.75;
-  if (x < 1 / d) return n * x * x;
-  if (x < 2 / d) return n * (x -= 1.5 / d) * x + .75;
-  if (x < 2.5 / d) return n * (x -= 2.25 / d) * x + .9375;
-  return n * (x -= 2.625 / d) * x + .984375;
-}
-
 double _seg(double t, double a, double b, [double Function(double) f = _out3]) => f(_cl((t - a) / (b - a)));
 
 class _SplashFrame extends StatelessWidget {

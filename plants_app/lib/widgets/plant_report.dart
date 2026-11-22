@@ -223,7 +223,7 @@ class CareGrid extends StatelessWidget {
     final every = everyDaysOverride ?? care.waterEveryDays;
     final items = <(String, String, String, Color)>[
       ('☀️', t.careLight, care.light, extra.sunBg),
-      ('💧', t.careWatering, [t.everyDays(every), care.watering].where((s) => s.isNotEmpty).join('. '), extra.waterBg),
+      ('💧', t.careWatering, [t.everyDays(every), care.watering].where((s) => s.isNotEmpty).join(', '), extra.waterBg),
       ('💨', t.careHumidity, care.humidity, extra.leaf),
       ('🌡️', t.careTemperature, care.temperature, extra.clayBg),
       ('🪴', t.careSoil, care.soil, extra.leaf),

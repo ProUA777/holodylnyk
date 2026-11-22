@@ -104,7 +104,7 @@ class _PlantsAppState extends State<PlantsApp> {
           debugShowCheckedModeBanner: false,
           theme: buildTheme(Brightness.light),
           darkTheme: buildTheme(Brightness.dark),
-          home: const AnimatedSplash(child: Shell()),
+          home: AnimatedSplash(child: Shell(key: Shell.globalKey)),
         ),
       ),
     );
@@ -115,7 +115,13 @@ class _PlantsAppState extends State<PlantsApp> {
 class Shell extends StatefulWidget {
   const Shell({super.key});
 
-  static void openGarden(BuildContext context) => context.findAncestorStateOfType<_ShellState>()?._go(1);
+  static final globalKey = GlobalKey<_ShellState>();
+
+  /// Перейти на «Мої рослини» з будь-якого екрана (закриває відкриті поверх екрани)
+  static void openGarden(BuildContext context) {
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    globalKey.currentState?._go(1);
+  }
 
   @override
   State<Shell> createState() => _ShellState();
