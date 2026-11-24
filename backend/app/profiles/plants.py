@@ -71,7 +71,7 @@ class PlantScan(BaseModel):
     name: str = Field(default="", description="Найімовірніший вид, мовою користувача")
     latin: str | None = Field(default=None, description="Латинська назва")
     confidence: float = Field(default=0.5, ge=0, le=1)
-    alternatives: list[Alternative] = Field(default_factory=list, max_length=4)
+    alternatives: list[Alternative] = Field(default_factory=list)
     symptoms: list[str] = Field(default_factory=list, description="Що не так видно на фото: плями, жовтизна, шкідники...")
     surroundings: list[str] = Field(default_factory=list, description="Горщик, ґрунт (мокрий/сухий), світло, де стоїть")
     health: Health = Health.healthy
@@ -134,7 +134,7 @@ class PlantResult(BaseModel):
     alternatives: list[Alternative] = Field(default_factory=list)
     health: Health = Health.healthy
     health_summary: str = Field(default="", description="Одне-два речення про стан рослини")
-    problems: list[Problem] = Field(default_factory=list, max_length=5)
+    problems: list[Problem] = Field(default_factory=list)
     care: Care = Field(default_factory=Care)
     toxicity: Toxicity = Field(default_factory=Toxicity)
     todo_now: list[str] = Field(default_factory=list, description="3–5 справ на сьогодні/цей тиждень")
@@ -206,7 +206,7 @@ class PlantQuestion(BaseModel):
 
 class PlantAnswer(BaseModel):
     answer: str = Field(description="Коротка відповідь, 2–5 речень, конкретно")
-    steps: list[str] = Field(default_factory=list, max_length=6, description="Що зробити, якщо доречно")
+    steps: list[str] = Field(default_factory=list, description="Що зробити, якщо доречно")
 
 
 def ask_prompt(q: PlantQuestion) -> str:

@@ -115,8 +115,8 @@ class RepairResult(BaseModel):
     summary: str = Field(default="", description="1–2 речення: що, найімовірніше, сталося")
     safety: Safety = Safety.careful
     safety_note: str = Field(default="", description="Що зробити перед початком: вимкнути автомат, перекрити воду…")
-    causes: list[Cause] = Field(default_factory=list, max_length=4)
-    parts: list[Part] = Field(default_factory=list, max_length=12)
+    causes: list[Cause] = Field(default_factory=list)
+    parts: list[Part] = Field(default_factory=list)
     pro_cost: str | None = Field(default=None, description="Скільки орієнтовно візьме майстер")
     signs: list[str] = Field(default_factory=list, description="Ознаки з фото (заповнює сервер)")
 
@@ -179,7 +179,7 @@ class RepairQuestion(BaseModel):
 
 class RepairAnswer(BaseModel):
     answer: str
-    steps: list[str] = Field(default_factory=list, max_length=6)
+    steps: list[str] = Field(default_factory=list)
 
 
 def ask_prompt(q: RepairQuestion) -> str:

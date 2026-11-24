@@ -1,0 +1,50 @@
+name: yak_rozvyazaty
+description: "Як розв’язати? — фото завдання → підказки й пояснення по кроках. PhotoAI Engine."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.2
+  image_picker: ^1.1.2
+  shared_preferences: ^2.3.2
+  google_fonts: ^6.2.1
+  path_provider: ^2.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/brand/
+
+# Іконка апки: dart run flutter_launcher_icons   (setup.sh/ps1 запускають самі)
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#4CC9F0"
+  adaptive_icon_foreground: "assets/icon/icon_fg.png"
+  remove_alpha_ios: true
+
+# Системна заставка — лише тло того ж кольору, що й анімована (lib/screens/splash_screen.dart),
+# щоб перехід був непомітним: спершу Koreec, потім значок застосунку.
+flutter_native_splash:
+  color: "#FFFFFF"
+  color_dark: "#0A1626"
+  android_12:
+    color: "#FFFFFF"
+    color_dark: "#0A1626"
+    icon_background_color: "#FFFFFF"
+    icon_background_color_dark: "#0A1626"
+    image: "assets/brand/koreec_knot_square.png"
+    image_dark: "assets/brand/koreec_knot_square_dark.png"

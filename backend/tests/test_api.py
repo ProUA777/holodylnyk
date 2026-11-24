@@ -433,3 +433,13 @@ def test_claude_primary_gemini_backup():
     assert isinstance(p, FallbackProvider) and p.primary.name == "anthropic" and p.backup.name == "gemini"
     st.gemini_api_key = ""
     assert isinstance(build_provider(st), AnthropicProvider)
+
+
+def test_long_ai_lists_do_not_break_validation():
+    """AI іноді повертає довші списки, ніж просили — це не має давати 502."""
+    from app.profiles.outfits import OutfitResult
+    from app.profiles.plants import PlantResult
+    from app.profiles.repair import RepairResult
+    RepairResult.model_validate({"causes": [{"title": f"c{i}"} for i in range(7)], "parts": [{"name": f"p{i}"} for i in range(20)]})
+    PlantResult.model_validate({"problems": [{"title": f"p{i}"} for i in range(9)], "alternatives": [{"name": "a"}] * 6})
+    OutfitResult.model_validate({"verdict": {"score": 5, "good": ["a"] * 7}, "shopping": ["x"] * 9})

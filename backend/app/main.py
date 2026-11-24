@@ -30,6 +30,7 @@ from .engine.errors import EngineError
 from .engine.providers import build_provider
 from .engine.store import Store
 from .privacy import privacy_html
+from .profiles.homework import HomeworkProfile
 from .profiles.outfits import OutfitsProfile
 from .profiles.plants import PlantsProfile
 from .profiles.repair import RepairProfile
@@ -49,6 +50,7 @@ def build_engine(settings: Settings, store: Store) -> Engine:
     engine.register(PlantsProfile())
     engine.register(OutfitsProfile())
     engine.register(RepairProfile())
+    engine.register(HomeworkProfile())
     # Нові апки підключаються тут: engine.register(LegoProfile()), engine.register(PartsProfile()) ...
     return engine
 

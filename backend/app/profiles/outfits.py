@@ -125,7 +125,7 @@ class OutfitScan(BaseModel):
     clothes_detected: bool = Field(description="false, якщо на фото немає одягу")
     message: str | None = None
     photo_kind: PhotoKind = PhotoKind.items
-    items: list[Item] = Field(default_factory=list, max_length=40)
+    items: list[Item] = Field(default_factory=list)
 
 
 # ---------- Крок 2: образи ----------
@@ -136,15 +136,15 @@ class Outfit(BaseModel):
     items: list[str] = Field(default_factory=list, description="Назви речей з гардероба, ТОЧНО як у списку")
     add: list[str] = Field(default_factory=list, description="Чого бракує, щоб образ був завершеним (докупити або взяти своє)")
     why: str = Field(default="", description="Чому це працює: кольори, пропорції — 1–2 речення")
-    tips: list[str] = Field(default_factory=list, max_length=4, description="Як носити: заправити, підкотити, аксесуар")
+    tips: list[str] = Field(default_factory=list, description="Як носити: заправити, підкотити, аксесуар")
 
 
 class Verdict(BaseModel):
     """Для фото людини в образі."""
 
     score: int = Field(ge=1, le=10)
-    good: list[str] = Field(default_factory=list, max_length=4)
-    change: list[str] = Field(default_factory=list, max_length=4)
+    good: list[str] = Field(default_factory=list)
+    change: list[str] = Field(default_factory=list)
 
 
 class OutfitResult(BaseModel):
@@ -155,7 +155,7 @@ class OutfitResult(BaseModel):
     palette: list[str] = Field(default_factory=list, description="3–5 кольорів #RRGGBB, на яких тримається гардероб")
     outfits: list[Outfit] = Field(default_factory=list)
     verdict: Verdict | None = None
-    shopping: list[str] = Field(default_factory=list, max_length=6, description="Базові речі, що найбільше розширять гардероб")
+    shopping: list[str] = Field(default_factory=list, description="Базові речі, що найбільше розширять гардероб")
 
 
 class WardrobeItem(BaseModel):
@@ -203,7 +203,7 @@ class StyleQuestion(BaseModel):
 
 class StyleAnswer(BaseModel):
     answer: str
-    tips: list[str] = Field(default_factory=list, max_length=6)
+    tips: list[str] = Field(default_factory=list)
 
 
 def ask_prompt(q: StyleQuestion) -> str:
@@ -308,6 +308,9 @@ class OutfitsProfile(Profile):
             o.tips = [s for s in (_line(x, 160) for x in o.tips) if s][:4]
         result.palette = [c for c in result.palette if isinstance(c, str) and len(c) == 7 and c.startswith("#")][:5]
         result.shopping = [s for s in (_line(x, 80) for x in result.shopping) if s][:6]
+        if result.verdict:
+            result.verdict.good = result.verdict.good[:4]
+            result.verdict.change = result.verdict.change[:4]
         return result
 
     def mock_output(self, mode: str) -> dict[str, Any] | None:
