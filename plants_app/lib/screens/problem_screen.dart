@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/report_sheet.dart';
 import '../api.dart';
 import '../l10n.dart';
 import '../main.dart';
@@ -55,7 +56,7 @@ class _ProblemScreenState extends State<ProblemScreen> {
     final t = L10n.of(context);
     final extra = Extra.of(context);
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(actions: [if (_md != null) ReportButton(content: () => _md ?? '')]),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
         children: [

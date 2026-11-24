@@ -4,6 +4,8 @@
 #  • збирає iOS-версію на Mac від GitHub (перевірка, що все компілюється під iPhone)
 # Адреса сервера й ключ апки беруться з Settings → Secrets and variables → Actions:
 #   API_URL  (напр. https://api.твійдомен.com)   API_KEY  (той самий, що PHOTOAI_API_KEYS)
+# Підпис для Google Play (необов'язково; без них APK підписується debug-ключем, а .aab не збирається):
+#   ANDROID_KEYSTORE_BASE64  (upload-ключ .jks у base64)   ANDROID_KEYSTORE_PASSWORD   ANDROID_KEY_ALIAS   ANDROID_KEY_PASSWORD
 name: build
 
 on:
@@ -44,14 +46,36 @@ jobs:
       - run: bash setup.sh
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
+      # Ключ завантаження Google Play з секретів (у репозиторій не потрапляє: key.properties і *.jks у .gitignore)
+      - name: Ключ підпису
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KS" ]; then echo "SIGNED=0" >> "$GITHUB_ENV"; echo "Секретів підпису немає — debug-підпис, без .aab"; exit 0; fi
+          echo "$KS" | base64 -d > android/app/upload.jks
+          printf 'storeFile=upload.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$KS_PASS" "$KEY_ALIAS" "${KEY_PASS:-$KS_PASS}" > android/key.properties
+          echo "SIGNED=1" >> "$GITHUB_ENV"
+      # Номер збірки = номер запуску CI: кожна нова версія більша за попередню (Google Play цього вимагає)
       - run: >
-          flutter build apk --release
+          flutter build apk --release --build-number=${{ github.run_number }}
+          --dart-define=API_URL=${{ secrets.API_URL }}
+          --dart-define=API_KEY=${{ secrets.API_KEY }}
+      - name: AAB для Google Play
+        if: env.SIGNED == '1'
+        run: >
+          flutter build appbundle --release --build-number=${{ github.run_number }}
           --dart-define=API_URL=${{ secrets.API_URL }}
           --dart-define=API_KEY=${{ secrets.API_KEY }}
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.apk }}-android
-          path: ${{ matrix.dir }}/build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            ${{ matrix.dir }}/build/app/outputs/flutter-apk/app-release.apk
+            ${{ matrix.dir }}/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: warn
       # Пряме посилання для телефона (без входу в GitHub):
       # https://github.com/<репозиторій>/releases/download/<tag>/<apk>.apk
       - name: APK у Releases
@@ -59,8 +83,12 @@ jobs:
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
           cp build/app/outputs/flutter-apk/app-release.apk ${{ matrix.apk }}.apk
+          FILES="${{ matrix.apk }}.apk"
+          if [ -f build/app/outputs/bundle/release/app-release.aab ]; then
+            cp build/app/outputs/bundle/release/app-release.aab ${{ matrix.apk }}.aab; FILES="$FILES ${{ matrix.apk }}.aab"
+          fi
           gh release delete ${{ matrix.tag }} --yes --cleanup-tag || true
-          gh release create ${{ matrix.tag }} ${{ matrix.apk }}.apk --target "${{ github.sha }}" ${{ matrix.latest }} \
+          gh release create ${{ matrix.tag }} $FILES --target "${{ github.sha }}" ${{ matrix.latest }} \
             --title "${{ matrix.title }} — остання збірка" \
             --notes "Android: відкрий цю сторінку на телефоні й натисни ${{ matrix.apk }}.apk. Збірка з коміту ${{ github.sha }}."
 

@@ -22,7 +22,9 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import ValidationError
+from typing import Literal
+
+from pydantic import BaseModel, Field, ValidationError
 
 from .config import Settings, get_settings
 from .engine.engine import Engine
@@ -173,10 +175,28 @@ async def health(request: Request):
 
 
 @app.get("/privacy", response_class=HTMLResponse)
-async def privacy(request: Request, lang: str = "uk"):
+async def privacy(request: Request, lang: str = "uk", app: str = "recipes"):
     settings: Settings = request.app.state.settings
     return privacy_html(lang if lang in ("uk", "pl") else "uk", settings.app_owner, settings.contact_email,
-                        request.app.state.ai_name)
+                        request.app.state.ai_name, app)
+
+
+class ReportIn(BaseModel):
+    """Скарга на відповідь AI (вимога Google Play до застосунків з AI-контентом)."""
+
+    reason: Literal["wrong", "harmful", "offensive", "other"] = "wrong"
+    comment: str = Field(default="", max_length=500)
+    content: str = Field(default="", max_length=4000)
+    language: Literal["uk", "pl"] = "uk"
+
+
+@app.post("/v1/{profile_id}/report")
+async def report(request: Request, profile_id: str, client: Client = Depends(guard)):
+    engine: Engine = request.app.state.engine
+    engine.get(profile_id)  # невідомий профіль → 404
+    d = parse(ReportIn, await read_json(request))
+    request.app.state.store.add_report(profile_id, d.reason, d.comment.strip(), d.content.strip(), d.language)
+    return {"ok": True}
 
 
 @app.get("/v1/profiles")

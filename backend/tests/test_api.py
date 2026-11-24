@@ -443,3 +443,24 @@ def test_long_ai_lists_do_not_break_validation():
     RepairResult.model_validate({"causes": [{"title": f"c{i}"} for i in range(7)], "parts": [{"name": f"p{i}"} for i in range(20)]})
     PlantResult.model_validate({"problems": [{"title": f"p{i}"} for i in range(9)], "alternatives": [{"name": "a"}] * 6})
     OutfitResult.model_validate({"verdict": {"score": 5, "good": ["a"] * 7}, "shopping": ["x"] * 9})
+
+
+def test_report_ai_answer(client):
+    r = client.post("/v1/recipes/report", json={"reason": "harmful", "comment": "небезпечна порада", "content": "Текст відповіді"})
+    assert r.status_code == 200 and r.json() == {"ok": True}
+    rows = client.app.state.store.reports()
+    assert rows[0]["profile"] == "recipes" and rows[0]["reason"] == "harmful" and rows[0]["content"] == "Текст відповіді"
+    assert client.post("/v1/recipes/report", json={"reason": "spam"}).status_code == 422
+    assert client.post("/v1/nope/report", json={}).status_code == 404
+
+
+def test_privacy_per_app(client):
+    for app_id, name in [("plants", "Що з рослиною?"), ("outfits", "Що вдягнути?"), ("repair", "Що зламалось?"),
+                         ("homework", "Як розв’язати?")]:
+        t = client.get(f"/privacy?app={app_id}").text
+        assert name in t and "Поскаржитися" in t and "Greater Koreec Project Group" in t
+    assert "Де купити" in client.get("/privacy?app=repair").text and "Мікрофон" in client.get("/privacy?app=repair").text
+    assert "Де купити" not in client.get("/privacy?app=homework").text
+    assert "від 13 років" in client.get("/privacy?app=homework").text
+    assert "Jak rozwiązać?" in client.get("/privacy?app=homework&lang=pl").text
+    assert "Що приготувати" in client.get("/privacy?app=zzz").text

@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../widgets/report_sheet.dart';
 import '../api.dart';
 import '../l10n.dart';
 import '../main.dart';
@@ -127,6 +129,7 @@ class _ResultScreenState extends State<ResultScreen> {
       appBar: AppBar(
         title: r == null || _busy ? null : Text('${r.emoji} ${t.tasksN(r.solutions.length)}'),
         actions: [
+          if (r != null && !_busy) ReportButton(content: () => jsonEncode(r.toJson())),
           if (r != null && !_busy) IconButton(tooltip: t.editTask, onPressed: _edit, icon: const Icon(Icons.edit_outlined)),
         ],
       ),

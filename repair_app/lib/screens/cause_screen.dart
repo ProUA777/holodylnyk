@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/report_sheet.dart';
 import '../api.dart';
 import '../l10n.dart';
 import '../main.dart';
@@ -66,7 +67,7 @@ class _CauseScreenState extends State<CauseScreen> {
     final extra = Extra.of(context);
     final canFix = _md != null && cookingSteps(_md!).isNotEmpty;
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(actions: [if (_md != null) ReportButton(content: () => _md ?? '')]),
       bottomNavigationBar: !canFix
           ? null
           : SafeArea(

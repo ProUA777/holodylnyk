@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../widgets/report_sheet.dart';
 import '../api.dart';
 import '../l10n.dart';
 import '../main.dart';
@@ -101,7 +103,10 @@ class _ResultScreenState extends State<ResultScreen> {
     final t = L10n.of(context);
     final plant = _plant;
     return Scaffold(
-      appBar: AppBar(title: plant == null || _busy ? null : Text(plant.name)),
+      appBar: AppBar(
+        title: plant == null || _busy ? null : Text(plant.name),
+        actions: [if (plant != null && !_busy) ReportButton(content: () => jsonEncode(plant.toJson()))],
+      ),
       body: _busy
           ? _Loading(images: widget.images, step: _step)
           : _error != null

@@ -41,6 +41,9 @@ if [ -f "$PLIST" ]; then
   perl -0pi -e 's|(<key>CFBundleDisplayName</key>\s*<string>)[^<]*(</string>)|${1}Як розв’язати?${2}|' "$PLIST"
 fi
 
+# Підпис для Google Play (якщо є android/key.properties)
+bash ../tools/android_signing.sh
+
 flutter pub get
 dart run flutter_launcher_icons        # іконка апки з assets/icon
 dart run flutter_native_splash:create  # заставка при запуску

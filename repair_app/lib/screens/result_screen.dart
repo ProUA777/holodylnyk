@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../widgets/report_sheet.dart';
 import '../api.dart';
 import '../l10n.dart';
 import '../main.dart';
@@ -95,6 +97,7 @@ class _ResultScreenState extends State<ResultScreen> {
     final repair = _repair;
     return Scaffold(
       appBar: AppBar(actions: [
+        if (repair != null && !_busy) ReportButton(content: () => jsonEncode(repair.toJson())),
         if (repair != null && !_busy)
           IconButton(tooltip: t.askTitle, onPressed: () => showAskSheet(context, repair), icon: const Icon(Icons.chat_bubble_outline)),
       ]),

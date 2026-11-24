@@ -29,6 +29,8 @@ class Store:
                 PRIMARY KEY(day, key, kind))""")
             self._db.execute("""CREATE TABLE IF NOT EXISTS detail_cache(
                 key TEXT PRIMARY KEY, profile TEXT, markdown TEXT, created REAL)""")
+            self._db.execute("""CREATE TABLE IF NOT EXISTS reports(
+                created REAL, profile TEXT, reason TEXT, comment TEXT, content TEXT, language TEXT)""")
 
     @staticmethod
     def _today() -> str:
@@ -71,6 +73,20 @@ class Store:
         cutoff = datetime.fromtimestamp(time.time() - keep_days * 86400, timezone.utc).strftime("%Y-%m-%d")
         with self._lock:
             self._db.execute("DELETE FROM quota WHERE day < ?", (cutoff,))
+            # скарги на відповіді AI — не довше 90 днів (обіцяно в /privacy)
+            self._db.execute("DELETE FROM reports WHERE created < ?", (time.time() - 90 * 86400,))
+
+    # --- скарги на відповіді AI ------------------------------------------------
+    def add_report(self, profile: str, reason: str, comment: str, content: str, language: str) -> None:
+        with self._lock:
+            self._db.execute("INSERT INTO reports(created, profile, reason, comment, content, language) VALUES(?,?,?,?,?,?)",
+                             (time.time(), profile, reason, comment, content, language))
+
+    def reports(self, limit: int = 100) -> list[dict]:
+        with self._lock:
+            rows = self._db.execute("SELECT created, profile, reason, comment, content, language FROM reports "
+                                    "ORDER BY created DESC LIMIT ?", (limit,)).fetchall()
+        return [dict(zip(("created", "profile", "reason", "comment", "content", "language"), r)) for r in rows]
 
     # --- кеш детальних рецептів -------------------------------------------------
     def get_detail(self, key: str) -> str | None:

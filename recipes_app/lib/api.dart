@@ -106,6 +106,21 @@ class EngineClient {
     return WeekPlan.fromJson(_decode(resp));
   }
 
+  /// Скарга на відповідь AI (вимога Google Play). Фото не надсилаються — лише текст відповіді.
+  Future<void> report({required String content, required String reason, String comment = '', String language = 'uk'}) async {
+    final resp = await _guard(() async => _client.post(
+          _uri('report'),
+          headers: await _headers(json: true),
+          body: jsonEncode({
+            'reason': reason,
+            'comment': comment.trim().length > 500 ? comment.trim().substring(0, 500) : comment.trim(),
+            'content': content.length > 4000 ? content.substring(0, 4000) : content,
+            'language': language,
+          }),
+        ));
+    _decode(resp);
+  }
+
   Future<T> _guard<T>(Future<T> Function() call) async {
     try {
       return await call().timeout(_timeout);

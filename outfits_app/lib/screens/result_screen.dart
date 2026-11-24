@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../widgets/report_sheet.dart';
 import '../api.dart';
 import '../l10n.dart';
 import '../main.dart';
@@ -118,6 +120,7 @@ class _ResultScreenState extends State<ResultScreen> {
     return Scaffold(
       appBar: AppBar(
         actions: [
+          if (r != null && !_busy) ReportButton(content: () => jsonEncode(r.outfits.map((o) => o.toJson()).toList())),
           if (r != null && !_busy)
             IconButton(
               tooltip: t.askTitle,

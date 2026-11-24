@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../widgets/report_sheet.dart';
 import '../api.dart';
 import '../l10n.dart';
 import '../main.dart';
@@ -113,6 +115,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
     return Scaffold(
       appBar: AppBar(actions: [
+        ReportButton(content: () => [jsonEncode(r.toJson()), if (r.details != null) r.details!].join('\n\n')),
         IconButton(
           tooltip: t.share,
           icon: const Icon(Icons.ios_share),
