@@ -32,6 +32,7 @@ from .engine.store import Store
 from .privacy import privacy_html
 from .profiles.outfits import OutfitsProfile
 from .profiles.plants import PlantsProfile
+from .profiles.repair import RepairProfile
 from .profiles.recipes import RecipesProfile
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -47,6 +48,7 @@ def build_engine(settings: Settings, store: Store) -> Engine:
     engine.register(RecipesProfile())
     engine.register(PlantsProfile())
     engine.register(OutfitsProfile())
+    engine.register(RepairProfile())
     # Нові апки підключаються тут: engine.register(LegoProfile()), engine.register(PartsProfile()) ...
     return engine
 
