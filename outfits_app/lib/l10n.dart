@@ -83,6 +83,18 @@ abstract class Strings {
   String get looksEmpty => tr('looksEmpty');
 
   // помилки
+  String get ootdTitle => tr('ootdTitle');
+  String get ootdHint => tr('ootdHint');
+  String get ootdBtn => tr('ootdBtn');
+  String get ootdAnother => tr('ootdAnother');
+  String get ootdLoading => tr('ootdLoading');
+  String get ootdNeedItems => tr('ootdNeedItems');
+  String get wornToday => tr('wornToday');
+  String get wornTodayDone => tr('wornTodayDone');
+  String get share => tr('share');
+  String get sharedFrom => tr('sharedFrom');
+  String get whereBuy => tr('whereBuy');
+  String get whereBuyHint => tr('whereBuyHint');
   String get errNetwork => tr('errNetwork');
   String get errTimeout => tr('errTimeout');
   String get errRateLimited => tr('errRateLimited');
@@ -110,6 +122,7 @@ abstract class Strings {
   // з числами
   String maxPhotos(int n);
   String itemsN(int n);
+  String wornTimes(int n);
   String addedN(int n);
   String score(int n) => '$n/10';
 
@@ -222,6 +235,18 @@ class StringsUk extends Strings {
     'save': 'Зберегти',
     'looksSavedTitle': 'Збережені образи',
     'looksEmpty': 'Натисни ♥ на образі, щоб зберегти його тут.',
+    'ootdTitle': 'Образ дня',
+    'ootdHint': 'З твого гардероба, під погоду й справи на сьогодні',
+    'ootdBtn': 'Підібрати на сьогодні',
+    'ootdAnother': 'Інший',
+    'ootdLoading': 'Підбираю образ…',
+    'ootdNeedItems': 'Додай у гардероб хоча б 3 речі — і я щодня підбиратиму образ',
+    'wornToday': 'Одягаю сьогодні',
+    'wornTodayDone': 'Сьогодні в ньому ✓',
+    'share': 'Поділитися',
+    'sharedFrom': 'Підібрано в «Що вдягнути?»',
+    'whereBuy': 'Де купити',
+    'whereBuyHint': 'Відкриється пошук у магазині. Шукай за кольором і фасоном.',
     'errNetwork': 'Немає з’єднання з інтернетом.',
     'errTimeout': 'Сервер довго не відповідає. Спробуй ще раз.',
     'errRateLimited': 'Забагато запитів. Зачекай хвилинку.',
@@ -238,6 +263,8 @@ class StringsUk extends Strings {
   String maxPhotos(int n) => 'До $n фото за раз';
   @override
   String itemsN(int n) => '$n ${_ukPlural(n, 'річ', 'речі', 'речей')}';
+  @override
+  String wornTimes(int n) => 'Одягали $n ${_ukPlural(n, 'раз', 'рази', 'разів')}';
   @override
   String addedN(int n) => n == 0 ? inWardrobe : 'Додано до гардероба: $n ${_ukPlural(n, 'річ', 'речі', 'речей')}';
 }
@@ -326,6 +353,18 @@ class StringsPl extends Strings {
     'save': 'Zapisz',
     'looksSavedTitle': 'Zapisane stylizacje',
     'looksEmpty': 'Naciśnij ♥ przy stylizacji, aby ją tu zapisać.',
+    'ootdTitle': 'Stylizacja dnia',
+    'ootdHint': 'Z twojej szafy, pod pogodę i plany na dziś',
+    'ootdBtn': 'Dobierz na dziś',
+    'ootdAnother': 'Inna',
+    'ootdLoading': 'Dobieram stylizację…',
+    'ootdNeedItems': 'Dodaj do szafy co najmniej 3 rzeczy — a codziennie dobiorę stylizację',
+    'wornToday': 'Zakładam dziś',
+    'wornTodayDone': 'Dziś w niej ✓',
+    'share': 'Udostępnij',
+    'sharedFrom': 'Dobrane w „Co założyć?”',
+    'whereBuy': 'Gdzie kupić',
+    'whereBuyHint': 'Otworzy się wyszukiwanie w sklepie. Szukaj po kolorze i fasonie.',
     'errNetwork': 'Brak połączenia z internetem.',
     'errTimeout': 'Serwer długo nie odpowiada. Spróbuj ponownie.',
     'errRateLimited': 'Za dużo zapytań. Odczekaj chwilę.',
@@ -342,6 +381,8 @@ class StringsPl extends Strings {
   String maxPhotos(int n) => 'Do $n zdjęć naraz';
   @override
   String itemsN(int n) => '$n ${_plPlural(n, 'rzecz', 'rzeczy', 'rzeczy')}';
+  @override
+  String wornTimes(int n) => 'Noszona $n ${_plPlural(n, 'raz', 'razy', 'razy')}';
   @override
   String addedN(int n) => n == 0 ? inWardrobe : 'Dodano do szafy: $n ${_plPlural(n, 'rzecz', 'rzeczy', 'rzeczy')}';
 }

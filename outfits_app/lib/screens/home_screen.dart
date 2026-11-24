@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../api.dart';
 import '../l10n.dart';
 import '../main.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../widgets/brand.dart';
+import '../widgets/outfit_card.dart';
 import 'photos_screen.dart';
 import 'result_screen.dart';
 
@@ -62,6 +64,8 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 10),
           _SoftButton(icon: Icons.photo_library_outlined, label: t.gallery, onTap: () => _pick(ImageSource.gallery)),
           const _FromWardrobe(),
+          const SizedBox(height: 20),
+          const _TodayLook(),
           const SizedBox(height: 16),
           ValueListenableBuilder(
             valueListenable: scope.prefs,
@@ -329,3 +333,89 @@ class _SoftButton extends StatelessWidget {
   }
 }
 
+
+/// «Образ дня»: один образ з гардероба під погоду й справи на сьогодні. Не повторює те, що вдягали цього тижня.
+class _TodayLook extends StatefulWidget {
+  const _TodayLook();
+
+  @override
+  State<_TodayLook> createState() => _TodayLookState();
+}
+
+class _TodayLookState extends State<_TodayLook> {
+  bool _busy = false;
+  String? _error;
+
+  Future<void> _make() async {
+    final scope = AppScope.of(context);
+    final t = L10n.of(context);
+    final current = scope.looks.todayOutfit();
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final r = await scope.api.refine(
+        scope.wardrobe.items,
+        scope.prefs.value.copyWith(outfitCount: 1),
+        excludeTitles: [...scope.looks.recentlyWorn(), if (current != null) current.title],
+      );
+      if (r.outfits.isEmpty) {
+        if (mounted) setState(() => _error = t.errGeneric);
+      } else {
+        await scope.looks.setToday(r.outfits.first);
+      }
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = t.error(e));
+    } catch (_) {
+      if (mounted) setState(() => _error = t.errGeneric);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = AppScope.of(context);
+    final t = L10n.of(context);
+    final extra = Extra.of(context);
+    return ListenableBuilder(
+      listenable: Listenable.merge([scope.wardrobe, scope.looks]),
+      builder: (context, _) {
+        final today = scope.looks.todayOutfit();
+        final enough = scope.wardrobe.items.length >= 3;
+        return Container(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+          decoration: BoxDecoration(color: extra.sunBg, borderRadius: BorderRadius.circular(24)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(child: Text('☀️ ${t.ootdTitle}', style: display(19))),
+              if (today != null && !_busy)
+                TextButton.icon(onPressed: _make, icon: const Icon(Icons.refresh, size: 18), label: Text(t.ootdAnother)),
+            ]),
+            const SizedBox(height: 4),
+            if (!enough)
+              Text(t.ootdNeedItems, style: TextStyle(color: extra.muted, height: 1.35))
+            else if (_busy) ...[
+              const SizedBox(height: 8),
+              Row(children: [
+                const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.5)),
+                const SizedBox(width: 12),
+                Text(t.ootdLoading, style: const TextStyle(fontWeight: FontWeight.w700)),
+              ]),
+              const SizedBox(height: 8),
+            ] else if (today != null) ...[
+              const SizedBox(height: 6),
+              OutfitCard(outfit: today, known: scope.wardrobe.items),
+            ] else ...[
+              Text(t.ootdHint, style: TextStyle(color: extra.muted, height: 1.35)),
+              const SizedBox(height: 10),
+              FilledButton.icon(onPressed: _make, icon: const Icon(Icons.auto_awesome), label: Text(t.ootdBtn)),
+            ],
+            if (_error != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(_error!, style: TextStyle(color: extra.coral))),
+          ]),
+        );
+      },
+    );
+  }
+}

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../api.dart';
 import '../l10n.dart';
 import '../main.dart';
 import '../models.dart';
 import '../theme.dart';
+import 'shop_sheet.dart';
 
 /// Картка образу: назва, речі (з кольоровими кружечками), чого бракує, чому працює, як носити, ♥.
 class OutfitCard extends StatelessWidget {
@@ -59,15 +61,24 @@ class OutfitCard extends StatelessWidget {
             child: Wrap(spacing: 6, runSpacing: 6, children: [
               for (final name in outfit.items) _ItemChip(name: name, item: find(name)),
               for (final name in outfit.add)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: extra.coralBg,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: extra.coral.withValues(alpha: .5)),
+                Material(
+                  color: extra.coralBg,
+                  shape: StadiumBorder(side: BorderSide(color: extra.coral.withValues(alpha: .5))),
+                  child: InkWell(
+                    customBorder: const StadiumBorder(),
+                    onTap: () => showShopSheet(context, name),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Flexible(
+                          child: Text('+ ${t.addMissing}: $name',
+                              style: TextStyle(color: extra.coral, fontWeight: FontWeight.w800, fontSize: 13)),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.shopping_cart_outlined, size: 15, color: extra.coral),
+                      ]),
+                    ),
                   ),
-                  child: Text('+ ${t.addMissing}: $name',
-                      style: TextStyle(color: extra.coral, fontWeight: FontWeight.w800, fontSize: 13)),
                 ),
             ]),
           ),
@@ -83,10 +94,53 @@ class OutfitCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 4, right: 8),
               child: Text('✨ $tip', style: theme.textTheme.bodySmall?.copyWith(color: extra.muted, fontWeight: FontWeight.w600)),
             ),
+          const SizedBox(height: 6),
+          // «Одягаю сьогодні» + скільки разів + поділитися
+          ListenableBuilder(
+            listenable: scope.looks,
+            builder: (context, _) {
+              final today = scope.looks.wornToday(outfit);
+              final n = scope.looks.wornCount(outfit);
+              return Row(children: [
+                TextButton.icon(
+                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
+                  onPressed: () => scope.looks.toggleWorn(outfit),
+                  icon: Icon(today ? Icons.check_circle : Icons.checkroom, size: 20),
+                  label: Text(today ? t.wornTodayDone : t.wornToday, style: const TextStyle(fontWeight: FontWeight.w800)),
+                ),
+                if (n > 0) Text(t.wornTimes(n), style: TextStyle(color: extra.muted, fontSize: 12, fontWeight: FontWeight.w700)),
+                const Spacer(),
+                IconButton(
+                  tooltip: t.share,
+                  onPressed: () => Share.share(shareText(outfit, t)),
+                  icon: const Icon(Icons.ios_share),
+                ),
+              ]);
+            },
+          ),
         ]),
       ),
     );
   }
+}
+
+/// Текст образу, щоб надіслати подрузі чи собі в нотатки
+String shareText(Outfit o, Strings t) {
+  final b = StringBuffer()
+    ..writeln('👗 ${o.title}')
+    ..writeln(t.occasionLabels[o.occasion]);
+  for (final i in o.items) {
+    b.writeln('• $i');
+  }
+  for (final a in o.add) {
+    b.writeln('+ $a');
+  }
+  if (o.why.isNotEmpty) b..writeln()..writeln(o.why);
+  for (final tip in o.tips) {
+    b.writeln('✨ $tip');
+  }
+  b..writeln()..writeln('— ${t.sharedFrom}');
+  return b.toString().trim();
 }
 
 class _ItemChip extends StatelessWidget {

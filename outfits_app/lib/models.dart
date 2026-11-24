@@ -38,12 +38,13 @@ class OutfitParams {
   final StyleFor styleFor;
   final int outfitCount;
 
-  OutfitParams copyWith({String? language, Occasion? occasion, Weather? weather, StyleFor? styleFor}) => OutfitParams(
+  OutfitParams copyWith({String? language, Occasion? occasion, Weather? weather, StyleFor? styleFor, int? outfitCount}) =>
+      OutfitParams(
         language: language ?? this.language,
         occasion: occasion ?? this.occasion,
         weather: weather ?? this.weather,
         styleFor: styleFor ?? this.styleFor,
-        outfitCount: outfitCount,
+        outfitCount: outfitCount ?? this.outfitCount,
       );
 
   Map<String, dynamic> toJson() => {

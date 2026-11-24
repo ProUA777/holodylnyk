@@ -8,6 +8,7 @@ import '../l10n.dart';
 import '../main.dart';
 import '../models.dart';
 import '../theme.dart';
+import '../widgets/shop_sheet.dart';
 import '../widgets/outfit_card.dart';
 
 /// Фото (або гардероб без фото) → образи. Тут же: оцінка образу, «ще образи», «додати речі до гардероба».
@@ -185,7 +186,16 @@ class _ResultScreenState extends State<ResultScreen> {
                           Text('🛍️ ${t.shoppingTitle}', style: const TextStyle(fontWeight: FontWeight.w800)),
                           const SizedBox(height: 8),
                           for (final s in r.shopping)
-                            Padding(padding: const EdgeInsets.only(top: 4), child: Text('•  $s')),
+                            InkWell(
+                              onTap: () => showShopSheet(context, s),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                child: Row(children: [
+                                  Expanded(child: Text('•  $s')),
+                                  const Icon(Icons.shopping_cart_outlined, size: 18),
+                                ]),
+                              ),
+                            ),
                         ]),
                       ),
                     ],

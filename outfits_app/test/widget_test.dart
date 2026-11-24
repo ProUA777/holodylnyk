@@ -5,6 +5,8 @@ import 'package:shcho_vdyahnuty/closet.dart';
 import 'package:shcho_vdyahnuty/l10n.dart';
 import 'package:shcho_vdyahnuty/models.dart';
 import 'package:shcho_vdyahnuty/screens/splash_screen.dart';
+import 'package:shcho_vdyahnuty/shops.dart';
+import 'package:shcho_vdyahnuty/widgets/outfit_card.dart' show shareText;
 
 // Відповідь сервера в тому ж форматі, що віддає PhotoAI Engine (профіль outfits)
 final sample = {
@@ -32,6 +34,42 @@ final sample = {
 };
 
 void main() {
+  test('worn counter, outfit of the day, share text, shops', () async {
+    SharedPreferences.setMockInitialValues({});
+    final looks = LooksStore();
+    const o = Outfit(title: 'Офіс без нудьги', occasion: Occasion.work, items: ['джинси', 'сорочка'], add: ['лофери'], why: 'Чисто й просто');
+    final d1 = DateTime(2026, 11, 20, 9), d2 = DateTime(2026, 11, 24, 9);
+    await looks.toggleWorn(o, now: d1);
+    await looks.toggleWorn(o, now: d2);
+    expect(looks.wornCount(o), 2);
+    expect(looks.wornToday(o, now: d2), isTrue);
+    await looks.toggleWorn(o, now: DateTime(2026, 11, 24, 20)); // той самий день — скасування
+    expect(looks.wornCount(o), 1);
+    await looks.setToday(o, now: d2);
+    expect(looks.todayOutfit(now: DateTime(2026, 11, 24, 22))!.title, o.title);
+    expect(looks.todayOutfit(now: DateTime(2026, 11, 25, 7)), isNull); // новий день — новий образ
+    expect(looks.recentlyWorn(now: DateTime(2026, 11, 25)), ['Офіс без нудьги']);
+    expect(looks.recentlyWorn(now: DateTime(2026, 12, 5)), isEmpty);
+    final again = LooksStore();
+    await again.load();
+    expect(again.wornCount(o), 1);
+    expect(again.todayOutfit(now: d2)!.items, ['джинси', 'сорочка']);
+
+    final uk = supportedStrings['uk']!, pl = supportedStrings['pl']!;
+    final text = shareText(o, uk);
+    expect(text, contains('• джинси'));
+    expect(text, contains('+ лофери'));
+    expect(text, endsWith('Підібрано в «Що вдягнути?»'));
+    expect(uk.wornTimes(3), 'Одягали 3 рази');
+    expect(pl.wornTimes(5), 'Noszona 5 razy');
+    for (final k in ['ootdTitle', 'wornToday', 'share', 'whereBuy']) {
+      expect(uk.m.containsKey(k) && pl.m.containsKey(k), isTrue, reason: k);
+    }
+    expect(shopsFor('pl').first.search('białe trampki').toString(), contains('zalando.pl'));
+    expect(shopsFor('uk').last.search('біла сорочка').toString(), contains('q-'));
+    expect(const OutfitParams().copyWith(outfitCount: 1).toJson()['outfit_count'], 1);
+  });
+
   test('OutfitResult parses engine response', () {
     final r = OutfitResult.fromJson(sample);
     expect(r.worn, isTrue);
