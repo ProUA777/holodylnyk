@@ -225,7 +225,7 @@ class _Viewfinder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primary = AppColors.sprout; // фон видошукача — колір паростка
+    const primary = AppColors.mustard; // фон видошукача — гірчиця
     const onPrimary = AppColors.ink; // рамки, кнопка, текст
     final t = L10n.of(context);
     return Semantics(
