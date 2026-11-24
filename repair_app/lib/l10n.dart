@@ -65,6 +65,36 @@ abstract class Strings {
   String get deleteQ => tr('deleteQ');
   String get toBuy => tr('toBuy');
   String get openRepairs => tr('openRepairs');
+  String get fixMode => tr('fixMode');
+  String get fixModeHint => tr('fixModeHint');
+  String get whereBuy => tr('whereBuy');
+  String get whereBuyHint => tr('whereBuyHint');
+  String get afterCheck => tr('afterCheck');
+  String get afterCheckHint => tr('afterCheckHint');
+  String get afterLoading => tr('afterLoading');
+  String get afterOk => tr('afterOk');
+  String get afterBad => tr('afterBad');
+  String get afterTitle => tr('afterTitle');
+  String get maintTitle => tr('maintTitle');
+  String get serviceDue => tr('serviceDue');
+  String get serviceDoneBtn => tr('serviceDoneBtn');
+  String get startTimer => tr('startTimer');
+  String get stopTimer => tr('stopTimer');
+  String get back => tr('back');
+  String get next => tr('next');
+  String get finish => tr('finish');
+  String get enjoy => tr('enjoy');
+  String get close => tr('close');
+  String get voiceOn => tr('voiceOn');
+  String get voiceOff => tr('voiceOff');
+  String get voiceHint => tr('voiceHint');
+  String get voiceUnavailable => tr('voiceUnavailable');
+  String get ttsLocale => tr('ttsLocale');
+  String get sttLocale => tr('sttLocale');
+  List<String> get cmdNext => tr('cmdNext').split('|');
+  List<String> get cmdBack => tr('cmdBack').split('|');
+  List<String> get cmdRepeat => tr('cmdRepeat').split('|');
+  List<String> get cmdTimer => tr('cmdTimer').split('|');
   List<String> get loadingSteps => tr('loadingSteps').split('|');
   Map<Skill, String> get skillLabels => {for (final v in Skill.values) v: tr('skill_${v.name}')};
   Map<Safety, String> get safetyLabels => {for (final v in Safety.values) v: tr('safety_${v.name}')};
@@ -100,6 +130,11 @@ abstract class Strings {
   String likely(double p) => '${(p * 100).round()}%';
   String minutes(int n) => n >= 90 ? '~${(n / 60).round()} год' : '~$n хв';
   String inWork(int n);
+  String stepOf(int i, int n);
+  String timerOfStep(int i, String t);
+  String timeUp(int i);
+  String everyDays(int n);
+  String dueIn(int d);
 
   String settingsSummary(RepairParams p) => '${skillLabels[p.skill]}, $languageName';
 }
@@ -190,6 +225,36 @@ class StringsUk extends Strings {
     'diff_easy': 'легко',
     'diff_medium': 'середньо',
     'diff_hard': 'складно',
+    'fixMode': 'Ремонтую',
+    'fixModeHint': 'Кроки на весь екран, таймер, голосом «далі»',
+    'whereBuy': 'Де купити',
+    'whereBuyHint': 'Відкриється пошук у магазині. Звір модель і розмір зі старою деталлю.',
+    'afterCheck': 'Перевірити фото «після»',
+    'afterCheckHint': 'Сфотографуй місце ремонту — перевірю, чи все зроблено правильно',
+    'afterLoading': 'Перевіряю ремонт…',
+    'afterTitle': 'Перевірка після ремонту',
+    'afterOk': 'Виглядає добре! Ремонт зараховано ✓',
+    'afterBad': 'Є що доробити',
+    'maintTitle': 'Щоб не зламалось знову',
+    'serviceDue': 'Пора обслужити',
+    'serviceDoneBtn': 'Зробив',
+    'startTimer': 'Запустити таймер',
+    'stopTimer': 'Зупинити таймер',
+    'back': 'Назад',
+    'next': 'Далі',
+    'finish': 'Готово!',
+    'enjoy': 'Ремонт завершено! Сфотографуй результат для перевірки 📸',
+    'close': 'Закрити',
+    'voiceOn': 'Голос увімкнено',
+    'voiceOff': 'Керувати голосом',
+    'voiceHint': 'Скажи «далі», «назад», «повтори» або «таймер»',
+    'voiceUnavailable': 'Розпізнавання мови недоступне. Дозволь мікрофон у налаштуваннях телефона.',
+    'ttsLocale': 'uk-UA',
+    'sttLocale': 'uk_UA',
+    'cmdNext': 'далі|дальше|наступний|вперед|готово|зробив',
+    'cmdBack': 'назад|попередній',
+    'cmdRepeat': 'повтори|ще раз|повтор',
+    'cmdTimer': 'таймер|засічи|засікай',
     'errNetwork': 'Немає з’єднання з інтернетом.',
     'errTimeout': 'Сервер довго не відповідає. Спробуй ще раз.',
     'errRateLimited': 'Забагато запитів. Зачекай хвилинку.',
@@ -206,6 +271,16 @@ class StringsUk extends Strings {
   String maxPhotos(int n) => 'До $n фото однієї поломки';
   @override
   String inWork(int n) => 'В роботі: $n ${_ukPlural(n, 'ремонт', 'ремонти', 'ремонтів')}';
+  @override
+  String stepOf(int i, int n) => 'Крок $i з $n';
+  @override
+  String timerOfStep(int i, String t) => 'Таймер кроку $i: $t';
+  @override
+  String timeUp(int i) => 'Крок $i: час вийшов';
+  @override
+  String everyDays(int n) => n % 30 == 0 && n >= 60 ? 'раз на ${n ~/ 30} ${_ukPlural(n ~/ 30, 'місяць', 'місяці', 'місяців')}' : 'раз на $n ${_ukPlural(n, 'день', 'дні', 'днів')}';
+  @override
+  String dueIn(int d) => d <= 0 ? 'сьогодні' : d == 1 ? 'завтра' : 'за $d ${_ukPlural(d, 'день', 'дні', 'днів')}';
 }
 
 class StringsPl extends Strings {
@@ -277,6 +352,36 @@ class StringsPl extends Strings {
     'diff_easy': 'łatwe',
     'diff_medium': 'średnie',
     'diff_hard': 'trudne',
+    'fixMode': 'Naprawiam',
+    'fixModeHint': 'Kroki na cały ekran, minutnik, głosem „dalej”',
+    'whereBuy': 'Gdzie kupić',
+    'whereBuyHint': 'Otworzy się wyszukiwanie w sklepie. Porównaj model i rozmiar ze starą częścią.',
+    'afterCheck': 'Sprawdź zdjęcie „po”',
+    'afterCheckHint': 'Zrób zdjęcie miejsca naprawy — sprawdzę, czy wszystko zrobione dobrze',
+    'afterLoading': 'Sprawdzam naprawę…',
+    'afterTitle': 'Kontrola po naprawie',
+    'afterOk': 'Wygląda dobrze! Naprawa zaliczona ✓',
+    'afterBad': 'Jest coś do poprawienia',
+    'maintTitle': 'Żeby znów się nie zepsuło',
+    'serviceDue': 'Czas na serwis',
+    'serviceDoneBtn': 'Zrobione',
+    'startTimer': 'Uruchom minutnik',
+    'stopTimer': 'Zatrzymaj minutnik',
+    'back': 'Wstecz',
+    'next': 'Dalej',
+    'finish': 'Gotowe!',
+    'enjoy': 'Naprawa zakończona! Zrób zdjęcie wyniku do kontroli 📸',
+    'close': 'Zamknij',
+    'voiceOn': 'Głos włączony',
+    'voiceOff': 'Steruj głosem',
+    'voiceHint': 'Powiedz „dalej”, „wstecz”, „powtórz” lub „minutnik”',
+    'voiceUnavailable': 'Rozpoznawanie mowy niedostępne. Zezwól na mikrofon w ustawieniach telefonu.',
+    'ttsLocale': 'pl-PL',
+    'sttLocale': 'pl_PL',
+    'cmdNext': 'dalej|następny|naprzód|gotowe|zrobione',
+    'cmdBack': 'wstecz|cofnij|poprzedni',
+    'cmdRepeat': 'powtórz|jeszcze raz',
+    'cmdTimer': 'minutnik|timer|odliczaj',
     'errNetwork': 'Brak połączenia z internetem.',
     'errTimeout': 'Serwer długo nie odpowiada. Spróbuj ponownie.',
     'errRateLimited': 'Za dużo zapytań. Odczekaj chwilę.',
@@ -295,6 +400,16 @@ class StringsPl extends Strings {
   String minutes(int n) => n >= 90 ? '~${(n / 60).round()} godz.' : '~$n min';
   @override
   String inWork(int n) => 'W trakcie: $n ${_plPlural(n, 'naprawa', 'naprawy', 'napraw')}';
+  @override
+  String stepOf(int i, int n) => 'Krok $i z $n';
+  @override
+  String timerOfStep(int i, String t) => 'Minutnik kroku $i: $t';
+  @override
+  String timeUp(int i) => 'Krok $i: czas minął';
+  @override
+  String everyDays(int n) => n % 30 == 0 && n >= 60 ? 'co ${n ~/ 30} ${_plPlural(n ~/ 30, 'miesiąc', 'miesiące', 'miesięcy')}' : 'co $n ${_plPlural(n, 'dzień', 'dni', 'dni')}';
+  @override
+  String dueIn(int d) => d <= 0 ? 'dziś' : d == 1 ? 'jutro' : 'za $d ${_plPlural(d, 'dzień', 'dni', 'dni')}';
 }
 
 final Map<String, Strings> supportedStrings = {'uk': StringsUk(), 'pl': StringsPl()};

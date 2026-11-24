@@ -6,6 +6,7 @@ import '../main.dart';
 import '../markdown_view.dart';
 import '../models.dart';
 import '../theme.dart';
+import 'fix_screen.dart';
 
 /// Покрокова інструкція ремонту для однієї причини. Кроки можна відмічати пальцем.
 class CauseScreen extends StatefulWidget {
@@ -50,12 +51,34 @@ class _CauseScreenState extends State<CauseScreen> {
     }
   }
 
+  void _startFix() {
+    final steps = cookingSteps(_md ?? '');
+    if (steps.isEmpty) return;
+    Navigator.of(context).push(MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => FixScreen(title: widget.cause.title, steps: steps),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = L10n.of(context);
     final extra = Extra.of(context);
+    final canFix = _md != null && cookingSteps(_md!).isNotEmpty;
     return Scaffold(
       appBar: AppBar(),
+      bottomNavigationBar: !canFix
+          ? null
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  FilledButton.icon(onPressed: _startFix, icon: const Icon(Icons.build_circle_outlined), label: Text(t.fixMode)),
+                  const SizedBox(height: 4),
+                  Text(t.fixModeHint, style: TextStyle(color: extra.muted, fontSize: 12, fontWeight: FontWeight.w600)),
+                ]),
+              ),
+            ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
         children: [

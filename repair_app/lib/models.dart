@@ -13,14 +13,25 @@ T _enum<T extends Enum>(List<T> values, Object? name, T fallback) =>
 List<String> _strings(Object? v) => ((v as List?) ?? const []).map((e) => '$e').where((e) => e.trim().isNotEmpty).toList();
 
 class RepairParams {
-  const RepairParams({this.language = 'uk', this.skill = Skill.handy});
+  const RepairParams({this.language = 'uk', this.skill = Skill.handy, this.verifyThing, this.verifyCause});
   final String language;
   final Skill skill;
+  // перевірка «після ремонту» — лише для одного запиту, не зберігається
+  final String? verifyThing;
+  final String? verifyCause;
 
   RepairParams copyWith({String? language, Skill? skill}) =>
       RepairParams(language: language ?? this.language, skill: skill ?? this.skill);
 
-  Map<String, dynamic> toJson() => {'language': language, 'skill': skill.name};
+  RepairParams verify(String thing, String? cause) =>
+      RepairParams(language: language, skill: skill, verifyThing: thing, verifyCause: cause);
+
+  Map<String, dynamic> toJson() => {
+        'language': language,
+        'skill': skill.name,
+        if (verifyThing != null) 'verify_thing': verifyThing,
+        if (verifyCause != null) 'verify_cause': verifyCause,
+      };
 
   factory RepairParams.fromJson(Map<String, dynamic> j) =>
       RepairParams(language: j['language'] as String? ?? 'uk', skill: _enum(Skill.values, j['skill'], Skill.handy));
@@ -78,6 +89,29 @@ class Part {
   Map<String, dynamic> toJson() => {'name': name, 'is_tool': isTool, 'price': price};
 }
 
+/// Оцінка фото «після ремонту».
+class AfterCheck {
+  const AfterCheck({this.ok = false, this.issues = const [], this.advice = ''});
+  final bool ok;
+  final List<String> issues;
+  final String advice;
+
+  factory AfterCheck.fromJson(Map<String, dynamic> j) =>
+      AfterCheck(ok: j['ok'] as bool? ?? false, issues: _strings(j['issues']), advice: j['advice'] as String? ?? '');
+}
+
+/// Регулярна справа, щоб не зламалось знову: «почистити фільтр» раз на 90 днів.
+class Maintenance {
+  const Maintenance({required this.task, this.everyDays = 90});
+  final String task;
+  final int everyDays;
+
+  factory Maintenance.fromJson(Map<String, dynamic> j) =>
+      Maintenance(task: j['task'] as String? ?? '', everyDays: ((j['every_days'] as num?)?.toInt() ?? 90).clamp(7, 730));
+
+  Map<String, dynamic> toJson() => {'task': task, 'every_days': everyDays};
+}
+
 class RepairResult {
   const RepairResult({
     required this.thing,
@@ -91,6 +125,8 @@ class RepairResult {
     this.parts = const [],
     this.proCost,
     this.signs = const [],
+    this.maintenance = const [],
+    this.after,
   });
 
   final String thing;
@@ -104,6 +140,8 @@ class RepairResult {
   final List<Part> parts;
   final String? proCost;
   final List<String> signs; // ознаки з фото — для перерахунку
+  final List<Maintenance> maintenance;
+  final AfterCheck? after; // лише у відповіді на перевірку після ремонту
 
   List<Part> get tools => parts.where((p) => p.isTool).toList();
   List<Part> get spares => parts.where((p) => !p.isTool).toList();
@@ -139,6 +177,11 @@ class RepairResult {
             .toList(),
         proCost: j['pro_cost'] as String?,
         signs: _strings(j['signs']),
+        maintenance: ((j['maintenance'] as List?) ?? const [])
+            .map((e) => Maintenance.fromJson(e as Map<String, dynamic>))
+            .where((m) => m.task.trim().isNotEmpty)
+            .toList(),
+        after: j['after'] is Map<String, dynamic> ? AfterCheck.fromJson(j['after'] as Map<String, dynamic>) : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -153,6 +196,7 @@ class RepairResult {
         'parts': parts.map((p) => p.toJson()).toList(),
         'pro_cost': proCost,
         'signs': signs,
+        'maintenance': maintenance.map((m) => m.toJson()).toList(),
       };
 }
 

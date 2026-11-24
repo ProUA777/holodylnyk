@@ -18,6 +18,10 @@ for G in android/app/build.gradle.kts android/app/build.gradle; do
   fi
 done
 
+# Мікрофон для режиму «Ремонтую» (голос «далі»), сервіси озвучки/розпізнавання і відкриття магазинів (Android 11+)
+if ! grep -q 'android.permission.RECORD_AUDIO' "$MANIFEST"; then
+  perl -0pi -e 's|(<uses-permission android:name="android.permission.INTERNET"/>)|$1\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <queries>\n        <intent><action android:name="android.speech.RecognitionService"/></intent>\n        <intent><action android:name="android.intent.action.TTS_SERVICE"/></intent>\n        <intent><action android:name="android.intent.action.VIEW"/><data android:scheme="https"/></intent>\n    </queries>|' "$MANIFEST"
+fi
 # Назва апки мовою телефона: українська за замовчуванням, польська для pl
 perl -pi -e 's|android:label="[^"]*"|android:label="\@string/app_name"|' "$MANIFEST"
 mkdir -p android/app/src/main/res/values android/app/src/main/res/values-pl
@@ -33,6 +37,9 @@ fi
 PLIST=ios/Runner/Info.plist
 if [ -f "$PLIST" ] && ! grep -q NSCameraUsageDescription "$PLIST"; then
   perl -0pi -e 's|</dict>\s*</plist>|\t<key>NSCameraUsageDescription</key>\n\t<string>Щоб сфотографувати поломку й знайти причину</string>\n\t<key>NSPhotoLibraryUsageDescription</key>\n\t<string>Щоб вибрати фото поломки з галереї</string>\n</dict>\n</plist>|' "$PLIST"
+fi
+if [ -f "$PLIST" ] && ! grep -q NSMicrophoneUsageDescription "$PLIST"; then
+  perl -0pi -e 's|</dict>\s*</plist>|\t<key>NSMicrophoneUsageDescription</key>\n\t<string>Щоб керувати ремонтом голосом: «далі», «назад», «таймер»</string>\n\t<key>NSSpeechRecognitionUsageDescription</key>\n\t<string>Щоб розпізнавати голосові команди під час ремонту</string>\n\t<key>LSApplicationQueriesSchemes</key>\n\t<array><string>https</string></array>\n</dict>\n</plist>|' "$PLIST"
 fi
 if [ -f "$PLIST" ] && ! grep -q NSAllowsLocalNetworking "$PLIST"; then
   perl -0pi -e 's|</dict>\s*</plist>|\t<key>NSAppTransportSecurity</key>\n\t<dict>\n\t\t<key>NSAllowsLocalNetworking</key>\n\t\t<true/>\n\t</dict>\n</dict>\n</plist>|' "$PLIST"

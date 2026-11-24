@@ -16,7 +16,11 @@ class MyRepair {
     this.thumbPath,
     this.done = false,
     Set<String>? bought,
-  }) : bought = bought ?? <String>{};
+    this.doneAt,
+    Map<String, DateTime>? serviced,
+    this.afterOk,
+  })  : bought = bought ?? <String>{},
+        serviced = serviced ?? <String, DateTime>{};
 
   final String id;
   RepairResult result;
@@ -24,6 +28,19 @@ class MyRepair {
   final String? thumbPath;
   bool done;
   final Set<String> bought; // що з деталей/інструментів уже є
+  DateTime? doneAt; // коли полагоджено — від цієї дати рахуємо обслуговування
+  final Map<String, DateTime> serviced; // справа обслуговування → коли робили востаннє
+  bool? afterOk; // результат перевірки фото «після»
+
+  /// Коли наступного разу робити справу [m] (від останнього обслуговування або від ремонту)
+  DateTime nextService(Maintenance m) =>
+      (serviced[m.task] ?? doneAt ?? added).add(Duration(days: m.everyDays));
+
+  /// Через скільки днів (≤0 — пора)
+  int daysToService(Maintenance m, DateTime now) =>
+      DateTime(nextService(m).year, nextService(m).month, nextService(m).day)
+          .difference(DateTime(now.year, now.month, now.day))
+          .inDays;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -32,6 +49,9 @@ class MyRepair {
         'thumb': thumbPath,
         'done': done,
         'bought': bought.toList(),
+        'done_at': doneAt?.toIso8601String(),
+        'serviced': serviced.map((k, v) => MapEntry(k, v.toIso8601String())),
+        'after_ok': afterOk,
       };
 
   factory MyRepair.fromJson(Map<String, dynamic> j) => MyRepair(
@@ -41,6 +61,9 @@ class MyRepair {
         thumbPath: j['thumb'] as String?,
         done: j['done'] as bool? ?? false,
         bought: ((j['bought'] as List?) ?? const []).map((e) => '$e').toSet(),
+        doneAt: DateTime.tryParse(j['done_at'] as String? ?? ''),
+        serviced: ((j['serviced'] as Map?) ?? const {}).map((k, v) => MapEntry('$k', DateTime.tryParse('$v') ?? DateTime.now())),
+        afterOk: j['after_ok'] as bool?,
       );
 }
 
@@ -54,6 +77,34 @@ class RepairsStore extends ChangeNotifier {
   List<MyRepair> get sorted => List.of(_items)..sort((a, b) => a.done == b.done ? b.added.compareTo(a.added) : (a.done ? 1 : -1));
 
   int get openCount => _items.where((r) => !r.done).length;
+
+  /// Обслуговування, яке пора зробити (або за ≤3 дні) — для полагоджених речей
+  List<(MyRepair, Maintenance, int)> dueService({DateTime? now}) {
+    final at = now ?? DateTime.now();
+    final out = <(MyRepair, Maintenance, int)>[];
+    for (final r in _items.where((r) => r.done)) {
+      for (final m in r.result.maintenance) {
+        final d = r.daysToService(m, at);
+        if (d <= 3) out.add((r, m, d));
+      }
+    }
+    out.sort((a, b) => a.$3.compareTo(b.$3));
+    return out;
+  }
+
+  Future<void> markServiced(MyRepair r, Maintenance m, {DateTime? now}) async {
+    r.serviced[m.task] = now ?? DateTime.now();
+    await _save();
+  }
+
+  Future<void> setAfter(MyRepair r, bool ok) async {
+    r.afterOk = ok;
+    if (ok) {
+      r.done = true;
+      r.doneAt ??= DateTime.now();
+    }
+    await _save();
+  }
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -89,8 +140,9 @@ class RepairsStore extends ChangeNotifier {
     await _save();
   }
 
-  Future<void> setDone(MyRepair r, bool done) async {
+  Future<void> setDone(MyRepair r, bool done, {DateTime? now}) async {
     r.done = done;
+    r.doneAt = done ? (now ?? DateTime.now()) : null;
     await _save();
   }
 

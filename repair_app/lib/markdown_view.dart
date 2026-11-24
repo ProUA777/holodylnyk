@@ -74,9 +74,11 @@ String _plain(String s) => s.replaceAll('**', '');
 
 /// «5–7 хв», «10 хвилин», «3-4 хв» → хвилини для таймера (беремо більше значення).
 int minutesIn(String text) {
-  final m = RegExp(r'(\d+)(?:\s*[–-]\s*(\d+))?\s*(хв|хвилин|min)', caseSensitive: false).firstMatch(text);
+  final m = RegExp(r'(\d+)(?:\s*[–-]\s*(\d+))?\s*(хв|хвилин|min|год|godz)', caseSensitive: false).firstMatch(text);
   if (m == null) return 0;
-  return int.parse(m.group(2) ?? m.group(1)!);
+  final n = int.parse(m.group(2) ?? m.group(1)!);
+  final hours = m.group(3)!.toLowerCase().startsWith('год') || m.group(3)!.toLowerCase().startsWith('godz');
+  return (hours ? n * 60 : n).clamp(0, 24 * 60);
 }
 
 class MarkdownView extends StatelessWidget {

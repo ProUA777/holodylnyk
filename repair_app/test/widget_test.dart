@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shcho_zlamalos/l10n.dart';
 import 'package:shcho_zlamalos/models.dart';
 import 'package:shcho_zlamalos/repairs.dart';
+import 'package:shcho_zlamalos/shops.dart';
+import 'package:shcho_zlamalos/markdown_view.dart' show minutesIn;
 import 'package:shcho_zlamalos/screens/splash_screen.dart';
 
 // Відповідь сервера в тому ж форматі, що віддає PhotoAI Engine (профіль repair)
@@ -25,9 +27,57 @@ final sample = {
   ],
   'pro_cost': '400–700 грн',
   'signs': ['тече з-під ручки'],
+  'maintenance': [
+    {'task': 'почистити аератор', 'every_days': 90},
+    {'task': '', 'every_days': 30},
+  ],
 };
 
 void main() {
+  test('maintenance schedule, after-check, shops, strings', () async {
+    SharedPreferences.setMockInitialValues({});
+    final s = RepairsStore();
+    final r = await s.add(RepairResult.fromJson(sample), now: DateTime(2026, 1, 1));
+    final m = r.result.maintenance.single; // порожня справа відкинута
+    expect(s.dueService(now: DateTime(2026, 12, 1)), isEmpty); // ще не полагоджено
+    await s.setDone(r, true, now: DateTime(2026, 2, 1));
+    expect(r.daysToService(m, DateTime(2026, 2, 1)), 90);
+    expect(s.dueService(now: DateTime(2026, 3, 1)), isEmpty);
+    expect(s.dueService(now: DateTime(2026, 5, 2)).single.$3, 0);
+    await s.markServiced(r, m, now: DateTime(2026, 5, 2));
+    expect(s.dueService(now: DateTime(2026, 5, 3)), isEmpty);
+    final again = RepairsStore();
+    await again.load();
+    expect(again.items.single.serviced[m.task], DateTime(2026, 5, 2));
+    expect(again.items.single.doneAt, DateTime(2026, 2, 1));
+
+    final after = RepairResult.fromJson({'thing': 'x', 'after': {'ok': false, 'issues': ['підтікає'], 'advice': 'дотягни гайку'}});
+    expect(after.after!.issues, ['підтікає']);
+    final open2 = await s.add(RepairResult.fromJson(sample));
+    await s.setAfter(open2, true);
+    expect(open2.done, isTrue);
+    expect(const RepairParams().verify('змішувач', null).toJson()['verify_thing'], 'змішувач');
+    expect(const RepairParams().toJson().containsKey('verify_thing'), isFalse);
+
+    expect(shopsFor('pl').first.name, 'Allegro');
+    expect(shopsFor('uk').first.search('картридж 40 мм').toString(), contains('rozetka.com.ua'));
+    expect(shopsFor('uk').last.search('картридж 40 мм').toString(), contains('olx.ua'));
+    expect(shopQuery('картридж', brandModel: 'Grohe', isTool: false), 'картридж Grohe');
+    expect(shopQuery('ключ', brandModel: 'Grohe', isTool: true), 'ключ');
+    expect(minutesIn('Залиш на 2 години'), 120);
+    expect(minutesIn('Почекай 10 хв'), 10);
+
+    final uk = supportedStrings['uk']!, pl = supportedStrings['pl']!;
+    expect(uk.everyDays(90), 'раз на 3 місяці');
+    expect(uk.everyDays(14), 'раз на 14 днів');
+    expect(uk.dueIn(0), 'сьогодні');
+    expect(pl.everyDays(180), 'co 6 miesięcy');
+    for (final k in ['fixMode', 'whereBuy', 'afterCheck', 'maintTitle', 'cmdNext', 'voiceOff']) {
+      expect(uk.m.containsKey(k) && pl.m.containsKey(k), isTrue, reason: k);
+    }
+    expect(pl.cmdNext, contains('dalej'));
+  });
+
   test('RepairResult parses engine response', () {
     final r = RepairResult.fromJson(sample);
     expect(r.thing, 'змішувач для кухні');

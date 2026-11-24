@@ -61,3 +61,23 @@ def test_repair_http(client):
     client.app.state.engine.provider = Nothing()
     r = client.post("/v1/repair/analyze", files={"image": ("a.jpg", jpeg_bytes((300, 300)), "image/jpeg")})
     assert r.status_code == 422 and r.json()["message"] == "Це кіт"
+
+
+def test_repair_after_check_one_call(tmp_path):
+    calls = []
+
+    class After(MockProvider):
+        async def generate(self, req, mock_output=None):
+            calls.append(req)
+            return {"detected": True, "thing": "змішувач", "category": "plumbing", "signs": ["сухо"],
+                    "after": {"ok": True, "issues": [], "advice": "Перевір через годину ще раз"}}
+
+    res = asyncio.run(_engine(tmp_path, After()).analyze(
+        "repair", [jpeg_bytes((300, 300))], RepairParams(verify_thing="змішувач для кухні", verify_cause="Зношений картридж")))
+    assert len(calls) == 1 and "ПІСЛЯ ремонту" in calls[0].user_text and "Зношений картридж" in calls[0].user_text
+    assert res.after.ok is True and res.thing == "змішувач для кухні" and not res.causes
+
+
+def test_repair_maintenance(client):
+    r = client.post("/v1/repair/refine", json={"thing": "змішувач"})
+    assert r.json()["maintenance"][0]["every_days"] == 90

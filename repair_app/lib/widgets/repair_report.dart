@@ -6,16 +6,20 @@ import '../main.dart';
 import '../models.dart';
 import '../screens/cause_screen.dart';
 import '../theme.dart';
+import 'shop_sheet.dart';
 
 /// Звіт про поломку: безпека, що зробити перед початком, причини, інструменти й деталі, ціна майстра.
 class RepairReport extends StatelessWidget {
-  const RepairReport({super.key, required this.repair, this.bought, this.onToggleBought});
+  const RepairReport({super.key, required this.repair, this.bought, this.onToggleBought, this.maintenance});
 
   final RepairResult repair;
 
   /// Для збереженого ремонту — відмітки «вже є»
   final Set<String>? bought;
   final ValueChanged<String>? onToggleBought;
+
+  /// Для збереженого ремонту — свій блок обслуговування з датами
+  final Widget? maintenance;
 
   @override
   Widget build(BuildContext context) {
@@ -47,8 +51,8 @@ class RepairReport extends StatelessWidget {
       ],
       if (r.parts.isNotEmpty) ...[
         section(t.toBuy),
-        _PartsList(title: '🧰 ${t.toolsTitle}', parts: r.tools, bought: bought, onToggle: onToggleBought),
-        _PartsList(title: '🔩 ${t.partsTitle}', parts: r.spares, bought: bought, onToggle: onToggleBought),
+        _PartsList(title: '🧰 ${t.toolsTitle}', parts: r.tools, brandModel: r.brandModel, bought: bought, onToggle: onToggleBought),
+        _PartsList(title: '🔩 ${t.partsTitle}', parts: r.spares, brandModel: r.brandModel, bought: bought, onToggle: onToggleBought),
       ],
       if (r.proCost != null && r.proCost!.isNotEmpty) ...[
         const SizedBox(height: 12),
@@ -59,6 +63,15 @@ class RepairReport extends StatelessWidget {
           child: Text('👷 ${t.proCost}: ${r.proCost}', style: const TextStyle(fontWeight: FontWeight.w700)),
         ),
       ],
+      if (r.maintenance.isNotEmpty && maintenance == null) ...[
+        section('🗓 ${t.maintTitle}'),
+        for (final m in r.maintenance)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text('•  ${m.task} — ${t.everyDays(m.everyDays)}', style: const TextStyle(height: 1.35)),
+          ),
+      ],
+      if (maintenance != null) maintenance!,
     ]);
   }
 }
@@ -166,9 +179,10 @@ class CauseCard extends StatelessWidget {
 }
 
 class _PartsList extends StatelessWidget {
-  const _PartsList({required this.title, required this.parts, this.bought, this.onToggle});
+  const _PartsList({required this.title, required this.parts, this.brandModel, this.bought, this.onToggle});
   final String title;
   final List<Part> parts;
+  final String? brandModel;
   final Set<String>? bought;
   final ValueChanged<String>? onToggle;
 
@@ -176,6 +190,13 @@ class _PartsList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (parts.isEmpty) return const SizedBox.shrink();
     final extra = Extra.of(context);
+    final t = L10n.of(context);
+    Widget buy(Part p) => IconButton(
+          tooltip: t.whereBuy,
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.shopping_cart_outlined, size: 20),
+          onPressed: () => showShopSheet(context, p, brandModel: brandModel),
+        );
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -189,6 +210,7 @@ class _PartsList extends StatelessWidget {
                     const Text('•  '),
                     Expanded(child: Text(p.name)),
                     if (p.price != null) Text(p.price!, style: TextStyle(color: extra.muted, fontWeight: FontWeight.w700)),
+                    buy(p),
                   ]),
                 )
               : CheckboxListTile(
@@ -199,7 +221,8 @@ class _PartsList extends StatelessWidget {
                   onChanged: (_) => onToggle?.call(p.name),
                   title: Text(p.name,
                       style: TextStyle(decoration: bought!.contains(p.name) ? TextDecoration.lineThrough : null)),
-                  secondary: p.price == null ? null : Text(p.price!, style: TextStyle(color: extra.muted, fontWeight: FontWeight.w700)),
+                  subtitle: p.price == null ? null : Text(p.price!, style: TextStyle(color: extra.muted, fontWeight: FontWeight.w700)),
+                  secondary: bought!.contains(p.name) ? null : buy(p),
                 ),
       ]),
     );
