@@ -32,7 +32,17 @@ class GardenScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(t.plantsN(items.length), style: TextStyle(color: extra.muted, fontWeight: FontWeight.w700)),
               ],
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
+              if (items.isNotEmpty)
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  secondary: const Text('❄️', style: TextStyle(fontSize: 24)),
+                  title: Text(t.winterMode, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  subtitle: Text(t.winterHint),
+                  value: garden.winterMode,
+                  onChanged: garden.setWinterMode,
+                ),
+              const SizedBox(height: 8),
               if (items.isEmpty)
                 Container(
                   padding: const EdgeInsets.all(24),

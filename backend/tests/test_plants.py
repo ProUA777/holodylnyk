@@ -68,3 +68,25 @@ def test_plants_bad_input(client):
     assert r.status_code == 422
     r = client.post("/v1/plants/refine", json={"name": ""})
     assert r.status_code == 422
+
+
+def test_plants_progress_check_one_call(tmp_path):
+    calls = []
+
+    class Prog(MockProvider):
+        async def generate(self, req, mock_output=None):
+            calls.append(req)
+            return {"plant_detected": True, "name": "монстера", "health": "needs_attention", "symptoms": ["2 старі плями"],
+                    "progress": {"trend": "better", "note": "Нових плям немає", "still": ["старі плями"], "next_step": "Продовжуй"}}
+
+    res = asyncio.run(_engine(tmp_path, Prog()).analyze(
+        "plants", [jpeg_bytes((300, 300))],
+        PlantParams(progress_for="Монстера", progress_problems=["Перелив", "Павутинний кліщ"], progress_days=10)))
+    assert len(calls) == 1 and "перевірка лікування" in calls[0].user_text and "Павутинний кліщ" in calls[0].user_text
+    assert res.progress.trend.value == "better" and res.name == "Монстера" and not res.problems
+
+
+def test_plants_remedies_and_winter(client):
+    r = client.post("/v1/plants/refine", json={"name": "монстера", "symptoms": ["жовтіють листки"]}).json()
+    assert r["care"]["winter_water_every_days"] == 14
+    assert any(p["remedies"] for p in r["problems"])

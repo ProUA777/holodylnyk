@@ -28,12 +28,34 @@ Severity severityFrom(String? s) => switch (s) {
 List<String> _strings(Object? v) => ((v as List?) ?? const []).map((e) => '$e').where((e) => e.trim().isNotEmpty).toList();
 
 class PlantParams {
-  const PlantParams({this.language = 'uk', this.place = Place.any, this.pets = false, this.kids = false});
+  const PlantParams({
+    this.language = 'uk',
+    this.place = Place.any,
+    this.pets = false,
+    this.kids = false,
+    this.progressFor,
+    this.progressProblems = const [],
+    this.progressDays,
+  });
 
   final String language;
   final Place place;
   final bool pets;
   final bool kids;
+  // перевірка лікування — лише для одного запиту, не зберігається
+  final String? progressFor;
+  final List<String> progressProblems;
+  final int? progressDays;
+
+  PlantParams progress(String name, List<String> problems, int days) => PlantParams(
+        language: language,
+        place: place,
+        pets: pets,
+        kids: kids,
+        progressFor: name,
+        progressProblems: problems.take(5).toList(),
+        progressDays: days.clamp(0, 365),
+      );
 
   PlantParams copyWith({String? language, Place? place, bool? pets, bool? kids}) => PlantParams(
         language: language ?? this.language,
@@ -42,7 +64,15 @@ class PlantParams {
         kids: kids ?? this.kids,
       );
 
-  Map<String, dynamic> toJson() => {'language': language, 'place': place.name, 'pets': pets, 'kids': kids};
+  Map<String, dynamic> toJson() => {
+        'language': language,
+        'place': place.name,
+        'pets': pets,
+        'kids': kids,
+        if (progressFor != null) 'progress_for': progressFor,
+        if (progressFor != null) 'progress_problems': progressProblems,
+        if (progressDays != null) 'progress_days': progressDays,
+      };
 
   factory PlantParams.fromJson(Map<String, dynamic> j) => PlantParams(
         language: j['language'] as String? ?? 'uk',
@@ -74,6 +104,7 @@ class Problem {
     this.why = '',
     this.fixNow = const [],
     this.prevention,
+    this.remedies = const [],
   });
 
   final String title;
@@ -83,6 +114,7 @@ class Problem {
   final String why;
   final List<String> fixNow;
   final String? prevention;
+  final List<String> remedies; // що купити: засіб, ґрунт, горщик
 
   factory Problem.fromJson(Map<String, dynamic> j) => Problem(
         title: j['title'] as String? ?? '',
@@ -92,6 +124,7 @@ class Problem {
         why: j['why'] as String? ?? '',
         fixNow: _strings(j['fix_now']),
         prevention: j['prevention'] as String?,
+        remedies: _strings(j['remedies']),
       );
 
   Map<String, dynamic> toJson() => {
@@ -102,6 +135,7 @@ class Problem {
         'why': why,
         'fix_now': fixNow,
         'prevention': prevention,
+        'remedies': remedies,
       };
 
   String get emoji => switch (cause) {
@@ -127,10 +161,12 @@ class Care {
     this.fertilizer = '',
     this.repotting = '',
     this.pruning,
+    this.winterWaterEveryDays,
   });
 
   final String light, watering, humidity, temperature, soil, fertilizer, repotting;
   final int waterEveryDays;
+  final int? winterWaterEveryDays; // взимку при опаленні
   final String? pruning;
 
   factory Care.fromJson(Map<String, dynamic>? j) {
@@ -145,6 +181,7 @@ class Care {
       fertilizer: j['fertilizer'] as String? ?? '',
       repotting: j['repotting'] as String? ?? '',
       pruning: j['pruning'] as String?,
+      winterWaterEveryDays: (j['winter_water_every_days'] as num?)?.toInt().clamp(1, 90),
     );
   }
 
@@ -158,6 +195,7 @@ class Care {
         'fertilizer': fertilizer,
         'repotting': repotting,
         'pruning': pruning,
+        'winter_water_every_days': winterWaterEveryDays,
       };
 }
 
@@ -175,6 +213,26 @@ class Toxicity {
   Map<String, dynamic> toJson() => {'pets': pets, 'kids': kids, 'note': note};
 }
 
+enum Trend { better, same, worse }
+
+/// Перевірка лікування: краще / так само / гірше
+class Progress {
+  const Progress({this.trend = Trend.same, this.note = '', this.still = const [], this.nextStep = ''});
+  final Trend trend;
+  final String note;
+  final List<String> still;
+  final String nextStep;
+
+  String get emoji => switch (trend) { Trend.better => '📈', Trend.same => '➖', Trend.worse => '📉' };
+
+  factory Progress.fromJson(Map<String, dynamic> j) => Progress(
+        trend: Trend.values.firstWhere((v) => v.name == j['trend'], orElse: () => Trend.same),
+        note: j['note'] as String? ?? '',
+        still: _strings(j['still']),
+        nextStep: j['next_step'] as String? ?? '',
+      );
+}
+
 class PlantResult {
   const PlantResult({
     required this.name,
@@ -190,6 +248,7 @@ class PlantResult {
     this.todoNow = const [],
     this.funFact,
     this.symptoms = const [],
+    this.progress,
   });
 
   final String name;
@@ -207,6 +266,9 @@ class PlantResult {
 
   /// Ознаки з фото — щоб перерахувати діагноз, якщо людина виправить вид
   final List<String> symptoms;
+
+  /// Лише у відповіді на перевірку лікування
+  final Progress? progress;
 
   bool get unsure => confidence < 0.6;
 
@@ -230,6 +292,7 @@ class PlantResult {
         todoNow: _strings(j['todo_now']),
         funFact: j['fun_fact'] as String?,
         symptoms: _strings(j['symptoms']),
+        progress: j['progress'] is Map<String, dynamic> ? Progress.fromJson(j['progress'] as Map<String, dynamic>) : null,
       );
 
   Map<String, dynamic> toJson() => {

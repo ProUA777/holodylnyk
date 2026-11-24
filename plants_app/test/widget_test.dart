@@ -5,6 +5,7 @@ import 'package:shcho_z_roslynoyu/garden.dart';
 import 'package:shcho_z_roslynoyu/l10n.dart';
 import 'package:shcho_z_roslynoyu/models.dart';
 import 'package:shcho_z_roslynoyu/screens/splash_screen.dart';
+import 'package:shcho_z_roslynoyu/shops.dart';
 
 // Відповідь сервера в тому ж форматі, що віддає PhotoAI Engine (профіль plants)
 final sample = {
@@ -37,6 +38,55 @@ final sample = {
 };
 
 void main() {
+  test('winter mode, watering log, treatment checks, remedies, shops', () async {
+    SharedPreferences.setMockInitialValues({});
+    final g = GardenStore();
+    final res = PlantResult.fromJson({
+      'name': 'фікус',
+      'care': {'water_every_days': 7, 'winter_water_every_days': 14},
+      'problems': [
+        {'title': 'Перелив', 'remedies': ['перліт', ' '], 'fix_now': ['Не поливай']},
+      ],
+    });
+    expect(res.problems.single.remedies, ['перліт']);
+    expect(res.care.winterWaterEveryDays, 14);
+    final p = await g.add(res, now: DateTime(2026, 6, 1));
+    expect(p.everyDaysAt(DateTime(2026, 6, 1)), 7);
+    expect(p.everyDaysAt(DateTime(2026, 12, 1)), 14); // зимовий режим за замовчуванням увімкнено
+    await g.setEvery(p, 4);
+    expect(p.everyDaysAt(DateTime(2027, 1, 10)), 8); // пропорційно до порад
+    await g.setWinterMode(false);
+    expect(p.everyDaysAt(DateTime(2026, 12, 1)), 4);
+    await g.water(p, at: DateTime(2026, 6, 2));
+    await g.water(p, at: DateTime(2026, 6, 6));
+    expect(p.log.first, DateTime(2026, 6, 6));
+    await g.addCheck(p, const Progress(trend: Trend.better, note: 'нових плям немає'), at: DateTime(2026, 6, 10));
+    final g2 = GardenStore();
+    await g2.load();
+    expect(g2.winterMode, isFalse);
+    expect(g2.items.single.log.length, 2);
+    expect(g2.items.single.checks.single.trend, Trend.better);
+    await g2.setWinterMode(true);
+
+    final prog = PlantResult.fromJson({'name': 'x', 'progress': {'trend': 'worse', 'still': ['плями'], 'next_step': 'пересади'}});
+    expect(prog.progress!.trend, Trend.worse);
+    final params = const PlantParams().progress('фікус', ['Перелив'], 10).toJson();
+    expect(params['progress_for'], 'фікус');
+    expect(params['progress_days'], 10);
+    expect(const PlantParams().toJson().containsKey('progress_for'), isFalse);
+
+    expect(shopsFor('uk').first.search('перліт').toString(), contains('epicentrk.ua'));
+    expect(shopsFor('pl').first.name, 'Allegro');
+    final uk = supportedStrings['uk']!, pl = supportedStrings['pl']!;
+    expect(uk.wateredTimes(2), 'За 30 днів: 2 поливи');
+    expect(pl.wateredTimes(5), 'Przez 30 dni: 5 podlań');
+    expect(uk.winterEvery(14), '❄️ Взимку: раз на 14 днів');
+    expect(uk.trendLabels[Trend.better], 'Краще 🌱');
+    for (final k in ['whereBuy', 'winterMode', 'progressTitle', 'trend_same']) {
+      expect(uk.m.containsKey(k) && pl.m.containsKey(k), isTrue, reason: k);
+    }
+  });
+
   test('PlantResult parses engine response', () {
     final r = PlantResult.fromJson(sample);
     expect(r.name, 'монстера');

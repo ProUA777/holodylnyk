@@ -110,6 +110,19 @@ abstract class Strings {
   String get changeEvery => tr('changeEvery');
 
   // помилки
+  String get whereBuy => tr('whereBuy');
+  String get whereBuyHint => tr('whereBuyHint');
+  String get remediesTitle => tr('remediesTitle');
+  String get winterMode => tr('winterMode');
+  String get winterHint => tr('winterHint');
+  String get waterLog => tr('waterLog');
+  String get progressTitle => tr('progressTitle');
+  String get progressHint => tr('progressHint');
+  String get progressBtn => tr('progressBtn');
+  String get progressLoading => tr('progressLoading');
+  String get stillTitle => tr('stillTitle');
+  String get nextStepTitle => tr('nextStepTitle');
+  Map<Trend, String> get trendLabels => {for (final v in Trend.values) v: tr('trend_${v.name}')};
   String get errNetwork => tr('errNetwork');
   String get errTimeout => tr('errTimeout');
   String get errRateLimited => tr('errRateLimited');
@@ -142,6 +155,8 @@ abstract class Strings {
   String thirsty(int n);
   String plantsN(int n);
   String dateLabel(DateTime d);
+  String winterEvery(int n);
+  String wateredTimes(int n);
 
   String settingsSummary(PlantParams p) => [
         placeLabels[p.place]!,
@@ -252,6 +267,21 @@ class StringsUk extends Strings {
     'cancel': 'Скасувати',
     'save': 'Зберегти',
     'changeEvery': 'Як часто поливати',
+    'whereBuy': 'Де купити',
+    'whereBuyHint': 'Відкриється пошук у магазині. Перед покупкою звір діючу речовину.',
+    'remediesTitle': 'Що купити',
+    'winterMode': 'Зимовий режим',
+    'winterHint': 'Листопад–лютий: опалення, мало світла — поливати рідше',
+    'waterLog': 'Журнал поливу',
+    'progressTitle': 'Як іде лікування?',
+    'progressHint': 'Через кілька днів сфотографуй рослину — порівняю з тим, що було',
+    'progressBtn': 'Сфотографувати зараз',
+    'progressLoading': 'Порівнюю з тим, що було…',
+    'stillTitle': 'Ще лишилось',
+    'nextStepTitle': 'Далі',
+    'trend_better': 'Краще 🌱',
+    'trend_same': 'Без змін',
+    'trend_worse': 'Гірше ⚠️',
     'errNetwork': 'Немає з\'єднання з інтернетом.',
     'errTimeout': 'Сервер довго не відповідає. Спробуй ще раз.',
     'errRateLimited': 'Забагато запитів. Зачекай хвилинку.',
@@ -276,6 +306,10 @@ class StringsUk extends Strings {
           : d == 1
               ? 'Полив завтра'
               : 'Полив через $d ${_ukPlural(d, 'день', 'дні', 'днів')}';
+  @override
+  String winterEvery(int n) => '❄️ Взимку: ${everyDays(n)}';
+  @override
+  String wateredTimes(int n) => 'За 30 днів: $n ${_ukPlural(n, 'полив', 'поливи', 'поливів')}';
   @override
   String thirsty(int n) => 'Сьогодні полити: $n ${_ukPlural(n, 'рослину', 'рослини', 'рослин')}';
   @override
@@ -371,6 +405,21 @@ class StringsPl extends Strings {
     'cancel': 'Anuluj',
     'save': 'Zapisz',
     'changeEvery': 'Jak często podlewać',
+    'whereBuy': 'Gdzie kupić',
+    'whereBuyHint': 'Otworzy się wyszukiwanie w sklepie. Przed zakupem sprawdź substancję czynną.',
+    'remediesTitle': 'Co kupić',
+    'winterMode': 'Tryb zimowy',
+    'winterHint': 'Listopad–luty: grzejniki, mało światła — podlewaj rzadziej',
+    'waterLog': 'Dziennik podlewania',
+    'progressTitle': 'Jak idzie leczenie?',
+    'progressHint': 'Za kilka dni zrób zdjęcie rośliny — porównam z tym, co było',
+    'progressBtn': 'Zrób zdjęcie teraz',
+    'progressLoading': 'Porównuję z tym, co było…',
+    'stillTitle': 'Jeszcze zostało',
+    'nextStepTitle': 'Dalej',
+    'trend_better': 'Lepiej 🌱',
+    'trend_same': 'Bez zmian',
+    'trend_worse': 'Gorzej ⚠️',
     'errNetwork': 'Brak połączenia z internetem.',
     'errTimeout': 'Serwer długo nie odpowiada. Spróbuj ponownie.',
     'errRateLimited': 'Za dużo zapytań. Odczekaj chwilę.',
@@ -395,6 +444,10 @@ class StringsPl extends Strings {
           : d == 1
               ? 'Podlewanie jutro'
               : 'Podlewanie za $d ${_plPlural(d, 'dzień', 'dni', 'dni')}';
+  @override
+  String winterEvery(int n) => '❄️ Zimą: ${everyDays(n)}';
+  @override
+  String wateredTimes(int n) => 'Przez 30 dni: $n ${_plPlural(n, 'podlanie', 'podlania', 'podlań')}';
   @override
   String thirsty(int n) => 'Dziś podlać: $n ${_plPlural(n, 'roślinę', 'rośliny', 'roślin')}';
   @override

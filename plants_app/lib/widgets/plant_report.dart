@@ -6,6 +6,7 @@ import '../main.dart';
 import '../models.dart';
 import '../screens/problem_screen.dart';
 import '../theme.dart';
+import 'shop_sheet.dart';
 
 /// Звіт про рослину: стан, що зробити зараз, проблеми, догляд, отруйність, цікавий факт.
 /// Однаковий на екрані результату й у «Моїх рослинах».
@@ -192,6 +193,19 @@ class ProblemCard extends StatelessWidget {
           if (pr.prevention != null && pr.prevention!.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text('🛡️ ${t.prevention}: ${pr.prevention}', style: theme.textTheme.bodySmall?.copyWith(color: extra.muted)),
+          ],
+          if (pr.remedies.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text('🛒 ${t.remediesTitle}', style: const TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            Wrap(spacing: 6, runSpacing: 6, children: [
+              for (final r in pr.remedies)
+                ActionChip(
+                  avatar: const Icon(Icons.shopping_cart_outlined, size: 18),
+                  label: Text(r),
+                  onPressed: () => showShopSheet(context, r),
+                ),
+            ]),
           ],
           Align(
             alignment: Alignment.centerLeft,

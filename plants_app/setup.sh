@@ -18,6 +18,10 @@ for G in android/app/build.gradle.kts android/app/build.gradle; do
   fi
 done
 
+# Відкриття сторінок магазинів («Де купити») на Android 11+
+if ! grep -q 'android.intent.action.VIEW' "$MANIFEST"; then
+  perl -0pi -e 's|(<uses-permission android:name="android.permission.INTERNET"/>)|$1\n    <queries>\n        <intent><action android:name="android.intent.action.VIEW"/><data android:scheme="https"/></intent>\n    </queries>|' "$MANIFEST"
+fi
 # Назва апки мовою телефона: українська за замовчуванням, польська для pl
 perl -pi -e 's|android:label="[^"]*"|android:label="\@string/app_name"|' "$MANIFEST"
 mkdir -p android/app/src/main/res/values android/app/src/main/res/values-pl
